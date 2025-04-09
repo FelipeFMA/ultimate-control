@@ -1,0 +1,23 @@
+# Ignore build directory
+build/
+# Ignore CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore compiled binaries
+ultimate-control
+
+# Ignore user-specific files
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+*.user
+*.directory
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
