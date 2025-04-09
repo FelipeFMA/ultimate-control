@@ -1,0 +1,134 @@
+/* Ultimate Control - Professional GTK Theme */
+
+/* Base colors */
+@define-color bg_color #1e1e2e;
+@define-color fg_color #e0e0e0;
+@define-color accent_color #4e9a06;
+@define-color hover_color #3a3a4a;
+@define-color active_color #4e4e5e;
+@define-color border_color #2e2e3e;
+
+/* Global styles */
+* {
+    font-family: "Segoe UI", "Cantarell", "Noto Sans", sans-serif;
+    font-size: 11pt;
+    color: @fg_color;
+    background-color: @bg_color;
+}
+
+/* Window */
+window {
+    background-color: @bg_color;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    border: 1px solid @border_color;
+}
+
+/* Notebook */
+notebook {
+    background-color: @bg_color;
+    border-radius: 10px;
+    border: 1px solid @border_color;
+    padding: 6px;
+}
+
+/* Notebook tabs */
+notebook tab {
+    background-color: @bg_color;
+    border-radius: 8px;
+    padding: 6px 12px;
+    margin: 2px;
+    border: 1px solid transparent;
+    transition: all 200ms ease;
+}
+
+notebook tab:hover {
+    background-color: @hover_color;
+    border: 1px solid @accent_color;
+}
+
+notebook tab:checked {
+    background-color: @active_color;
+    border: 1px solid @accent_color;
+}
+
+/* Buttons */
+button {
+    background-color: @accent_color;
+    color: #ffffff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    border: none;
+    transition: background-color 200ms ease;
+}
+
+button:hover {
+    background-color: lighten(@accent_color, 10%);
+}
+
+button:active {
+    background-color: darken(@accent_color, 10%);
+}
+
+/* Labels */
+label {
+    color: @fg_color;
+}
+
+/* Entry fields */
+entry {
+    background-color: #2e2e3e;
+    color: @fg_color;
+    border-radius: 6px;
+    padding: 4px 8px;
+    border: 1px solid @border_color;
+}
+
+/* Scrollbars */
+scrollbar slider {
+    background-color: @accent_color;
+    border-radius: 6px;
+}
+
+scrollbar trough {
+    background-color: @border_color;
+    border-radius: 6px;
+}
+
+/* Tooltips */
+tooltip {
+    background-color: @hover_color;
+    color: @fg_color;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+/* Headers */
+headerbar {
+    background-color: @bg_color;
+    border-bottom: 1px solid @border_color;
+}
+
+/* Additional widget tweaks */
+treeview, list {
+    background-color: @bg_color;
+    color: @fg_color;
+}
+
+combobox, combobox box {
+    background-color: #2e2e3e;
+    color: @fg_color;
+    border-radius: 6px;
+    border: 1px solid @border_color;
+    padding: 4px 8px;
+}
+
+progressbar {
+    background-color: @border_color;
+    border-radius: 6px;
+}
+
+progressbar progress {
+    background-color: @accent_color;
+    border-radius: 6px;
+}
