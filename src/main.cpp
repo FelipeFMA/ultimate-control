@@ -4,9 +4,7 @@
 #include "wifi/WifiTab.hpp"
 #include "display/DisplayTab.hpp"
 #include "power/PowerTab.hpp"
-#include "battery/BatteryTab.hpp"
 #include "core/Settings.hpp"
-#include "settings/SettingsTab.hpp"
 
 class MainWindow : public Gtk::Window {
 public:
@@ -68,29 +66,7 @@ public:
             notebook_.append_page(*power_tab, *box);
         }
 
-        auto battery_tab = Gtk::make_managed<Battery::BatteryTab>();
-        {
-            auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
-            auto icon = Gtk::make_managed<Gtk::Image>();
-            icon->set_from_icon_name("battery-good-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-            auto label = Gtk::make_managed<Gtk::Label>("Battery");
-            box->pack_start(*icon, Gtk::PACK_SHRINK);
-            box->pack_start(*label, Gtk::PACK_SHRINK);
-            box->show_all();
-            notebook_.append_page(*battery_tab, *box);
-        }
 
-        auto settings_tab = Gtk::make_managed<Core::SettingsTab>();
-        {
-            auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
-            auto icon = Gtk::make_managed<Gtk::Image>();
-            icon->set_from_icon_name("emblem-system-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-            auto label = Gtk::make_managed<Gtk::Label>("Settings");
-            box->pack_start(*icon, Gtk::PACK_SHRINK);
-            box->pack_start(*label, Gtk::PACK_SHRINK);
-            box->show_all();
-            notebook_.append_page(*settings_tab, *box);
-        }
 
         show_all_children();
     }
