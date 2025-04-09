@@ -31,15 +31,19 @@ public:
         // Create tab placeholders
         create_tabs();
 
-        // Create settings tab
-        auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
-        settings_tab->set_settings_changed_callback([this]() {
-            // Reload tabs when settings change
-            reload_tabs();
-        });
+        // Create a placeholder for the settings tab
+        auto settings_placeholder = Gtk::make_managed<Gtk::Box>();
+        settings_placeholder->set_size_request(100, 100);
 
-        // Add settings tab
-        add_tab("settings", settings_tab, "preferences-system-symbolic", "Settings");
+        // Add settings tab placeholder
+        add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
+
+        // Connect to the delete event signal
+        signal_delete_event().connect([this](GdkEventAny* event) -> bool {
+            // Properly quit the application when the window is closed
+            Gtk::Main::quit();
+            return false; // Allow the default handler to run
+        });
 
         // Show all children
         show_all_children();
@@ -174,8 +178,14 @@ private:
             icon_name = "system-shutdown-symbolic";
             label_text = "Power";
         } else if (id == "settings") {
-            // Settings tab is already loaded
-            return;
+            auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
+            settings_tab->set_settings_changed_callback([this]() {
+                // Reload tabs when settings change
+                reload_tabs();
+            });
+            content = settings_tab;
+            icon_name = "preferences-system-symbolic";
+            label_text = "Settings";
         } else {
             // Unknown tab, reset loaded flag
             tab_widgets_[id].loaded = false;
@@ -239,7 +249,9 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-    auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
+    Gtk::Main kit(argc, argv);
     MainWindow window;
-    return app->run(window);
+    window.show();
+    Gtk::Main::run(window);
+    return 0;
 }
