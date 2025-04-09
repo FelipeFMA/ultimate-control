@@ -1,4 +1,5 @@
 #include "WifiTab.hpp"
+#include <iostream>
 
 namespace Wifi {
 
@@ -104,6 +105,7 @@ WifiTab::WifiTab()
     manager_->scan_networks();
 
     show_all_children();
+    std::cout << "WiFi tab loaded!" << std::endl;
 }
 
 WifiTab::~WifiTab() = default;

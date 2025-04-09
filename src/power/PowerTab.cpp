@@ -1,4 +1,5 @@
 #include "PowerTab.hpp"
+#include <iostream>
 
 namespace Power {
 
@@ -31,6 +32,7 @@ PowerTab::PowerTab()
     main_box_.pack_start(profiles_frame_, Gtk::PACK_SHRINK);
 
     show_all_children();
+    std::cout << "Power tab loaded!" << std::endl;
 }
 
 PowerTab::~PowerTab() = default;

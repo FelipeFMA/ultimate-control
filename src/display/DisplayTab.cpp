@@ -120,6 +120,7 @@ DisplayTab::DisplayTab()
     update_bluelight_icon(static_cast<int>(bluelight_scale_.get_value()));
 
     show_all_children();
+    std::cout << "Display tab loaded!" << std::endl;
 }
 
 DisplayTab::~DisplayTab() = default;

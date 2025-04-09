@@ -1,4 +1,5 @@
 #include "VolumeTab.hpp"
+#include <iostream>
 
 namespace Volume {
 
@@ -53,6 +54,7 @@ VolumeTab::VolumeTab()
     manager_->refresh_sinks();
 
     show_all_children();
+    std::cout << "Volume tab loaded!" << std::endl;
 }
 
 VolumeTab::~VolumeTab() = default;
