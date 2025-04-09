@@ -21,6 +21,7 @@ add_definitions(${GTKMM_CFLAGS_OTHER})
 file(GLOB_RECURSE SOURCES
     src/main.cpp
     src/core/*.cpp
+    src/settings/*.cpp
     src/utils/*.cpp
     src/bluetooth/*.cpp
     src/wifi/*.cpp

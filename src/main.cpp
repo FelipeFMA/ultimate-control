@@ -6,7 +6,7 @@
 #include "power/PowerTab.hpp"
 #include "battery/BatteryTab.hpp"
 #include "core/Settings.hpp"
-#include "core/SettingsTab.hpp"
+#include "settings/SettingsTab.hpp"
 
 class MainWindow : public Gtk::Window {
 public:
