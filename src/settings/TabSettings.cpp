@@ -12,26 +12,28 @@ TabSettings::TabSettings() {
     // Set the config path
     const char* home_dir = getenv("HOME");
     if (home_dir) {
-        config_path_ = std::string(home_dir) + "/.config/ultra-control/settings.json";
+        config_path_ = std::string(home_dir) + "/.config/ultimate-control/settings.json";
     } else {
-        config_path_ = "/tmp/ultra-control-settings.json";
+        config_path_ = "/tmp/ultimate-control-settings.json";
     }
-    
+
+    // Config path is set
+
     // Initialize default tab information
     tab_info_["volume"] = {"volume", "Volume", "audio-volume-high-symbolic", true};
     tab_info_["wifi"] = {"wifi", "WiFi", "network-wireless-symbolic", true};
     tab_info_["display"] = {"display", "Display", "video-display-symbolic", true};
     tab_info_["power"] = {"power", "Power", "system-shutdown-symbolic", true};
     tab_info_["settings"] = {"settings", "Settings", "preferences-system-symbolic", true};
-    
+
     // Default tab order
     tab_order_ = {"volume", "wifi", "display", "power", "settings"};
-    
+
     // Default all tabs to enabled
     for (const auto& tab : tab_info_) {
         tab_enabled_[tab.first] = true;
     }
-    
+
     // Load settings from file
     load();
 }
@@ -42,20 +44,20 @@ TabSettings::~TabSettings() {
 
 void TabSettings::ensure_config_dir() const {
     std::string dir_path = config_path_.substr(0, config_path_.find_last_of('/'));
-    
+
     // Create directory structure
     std::string current_path;
     std::istringstream path_stream(dir_path);
     std::string path_part;
-    
+
     while (std::getline(path_stream, path_part, '/')) {
         if (path_part.empty()) {
             current_path = "/";
             continue;
         }
-        
+
         current_path += path_part + "/";
-        
+
         struct stat info;
         if (stat(current_path.c_str(), &info) != 0) {
             // Directory doesn't exist, create it
@@ -73,28 +75,27 @@ void TabSettings::load() {
         // File doesn't exist, use defaults
         return;
     }
-    
     std::string line;
     while (std::getline(infile, line)) {
         // Skip empty lines and comments
         if (line.empty() || line[0] == '#') {
             continue;
         }
-        
+
         size_t delimiter_pos = line.find('=');
         if (delimiter_pos == std::string::npos) {
             continue;
         }
-        
+
         std::string key = line.substr(0, delimiter_pos);
         std::string value = line.substr(delimiter_pos + 1);
-        
+
         if (key == "tab_order") {
             // Parse tab order
             tab_order_.clear();
             std::istringstream order_stream(value);
             std::string tab_id;
-            
+
             while (std::getline(order_stream, tab_id, ',')) {
                 if (!tab_id.empty()) {
                     tab_order_.push_back(tab_id);
@@ -107,7 +108,7 @@ void TabSettings::load() {
             tab_enabled_[tab_id] = enabled;
         }
     }
-    
+
     // Ensure all tabs are in the order list
     for (const auto& tab : tab_info_) {
         if (std::find(tab_order_.begin(), tab_order_.end(), tab.first) == tab_order_.end()) {
@@ -118,16 +119,16 @@ void TabSettings::load() {
 
 void TabSettings::save() const {
     ensure_config_dir();
-    
+
     std::ofstream outfile(config_path_);
     if (!outfile.is_open()) {
         std::cerr << "Failed to save tab settings to " << config_path_ << std::endl;
         return;
     }
-    
+
     // Write header
     outfile << "# Ultimate Control Tab Settings\n";
-    
+
     // Write tab order
     outfile << "tab_order=";
     for (size_t i = 0; i < tab_order_.size(); ++i) {
@@ -137,7 +138,7 @@ void TabSettings::save() const {
         }
     }
     outfile << "\n";
-    
+
     // Write tab enabled states
     for (const auto& tab : tab_enabled_) {
         outfile << "tab_" << tab.first << "=" << (tab.second ? "1" : "0") << "\n";
@@ -166,7 +167,7 @@ void TabSettings::set_tab_enabled(const std::string& tab_id, bool enabled) {
 
 std::vector<TabInfo> TabSettings::get_all_tabs() const {
     std::vector<TabInfo> result;
-    
+
     for (const auto& tab_id : tab_order_) {
         auto it = tab_info_.find(tab_id);
         if (it != tab_info_.end()) {
@@ -175,7 +176,7 @@ std::vector<TabInfo> TabSettings::get_all_tabs() const {
             result.push_back(info);
         }
     }
-    
+
     return result;
 }
 
@@ -184,7 +185,7 @@ bool TabSettings::move_tab_up(const std::string& tab_id) {
     if (it == tab_order_.end() || it == tab_order_.begin()) {
         return false;
     }
-    
+
     std::iter_swap(it, it - 1);
     return true;
 }
@@ -194,7 +195,7 @@ bool TabSettings::move_tab_down(const std::string& tab_id) {
     if (it == tab_order_.end() || it == tab_order_.end() - 1) {
         return false;
     }
-    
+
     std::iter_swap(it, it + 1);
     return true;
 }

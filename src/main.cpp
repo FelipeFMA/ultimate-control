@@ -202,7 +202,15 @@ private:
             return;
         }
 
-        std::cout << "Lazy loading " << id << " tab" << std::endl;
+        // Make sure the tab exists in the notebook
+        if (tab_widgets_.find(id) == tab_widgets_.end()) {
+            return;
+        }
+
+        // Make sure the page number is valid
+        if (page_num < 0 || page_num >= notebook_.get_n_pages()) {
+            return;
+        }
 
         // Mark as loaded before creating to prevent recursive loading
         tab_widgets_[id].loaded = true;
@@ -231,7 +239,8 @@ private:
         } else if (id == "settings") {
             auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
             settings_tab->set_settings_changed_callback([this]() {
-                // Reload tabs when settings change
+                // This callback is no longer needed as the app restarts
+                // but we keep it for compatibility
                 reload_tabs();
             });
             content = settings_tab;
@@ -272,33 +281,24 @@ private:
     }
 
     void reload_tabs() {
-        // Save the current page or use the initial tab
-        int current_page = notebook_.get_current_page();
-        std::string current_tab;
+        // This method is kept for compatibility but is no longer used
+        // Tab changes now cause the application to restart instead
+        std::cout << "reload_tabs() called, but application restart is used instead" << std::endl;
 
-        // Find which tab is currently selected
-        for (const auto& [id, info] : tab_widgets_) {
-            if (info.page_num == current_page) {
-                current_tab = id;
-                break;
-            }
-        }
-
-        // If we have an initial tab and this is the first load, use that
-        if (!initial_tab_.empty() && current_tab.empty()) {
-            current_tab = initial_tab_;
-        }
+        // Reload settings from file
+        tab_settings_->load();
 
         // Recreate tabs
         create_tabs();
 
-        // Restore the current tab if possible
-        if (!current_tab.empty()) {
-            switch_to_tab(current_tab);
-        }
-        // Otherwise restore by page number
-        else if (current_page >= 0 && current_page < notebook_.get_n_pages()) {
-            notebook_.set_current_page(current_page);
+        // Re-add the settings tab
+        auto settings_placeholder = Gtk::make_managed<Gtk::Box>();
+        settings_placeholder->set_size_request(100, 100);
+        add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
+
+        // Switch to the settings tab
+        if (tab_widgets_.find("settings") != tab_widgets_.end()) {
+            notebook_.set_current_page(tab_widgets_["settings"].page_num);
         }
     }
 

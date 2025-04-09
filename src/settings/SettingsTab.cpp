@@ -1,5 +1,10 @@
 #include "SettingsTab.hpp"
 #include <iostream>
+#include <cstdlib>   // for std::exit
+#include <unistd.h>  // for execl
+#include <limits.h>  // for PATH_MAX
+#include <errno.h>   // for errno
+#include <string.h>  // for strerror
 
 namespace Settings {
 
@@ -33,10 +38,10 @@ SettingsTab::SettingsTab()
     save_button_.set_image_from_icon_name("document-save-symbolic", Gtk::ICON_SIZE_BUTTON);
     save_button_.set_always_show_image(true);
     save_button_.signal_clicked().connect(sigc::mem_fun(*this, &SettingsTab::on_save_clicked));
-    
+
     buttons_box_.set_halign(Gtk::ALIGN_END);
     buttons_box_.pack_start(save_button_, Gtk::PACK_SHRINK);
-    
+
     main_box_.pack_start(buttons_box_, Gtk::PACK_SHRINK);
 
     // Update the tab list
@@ -76,11 +81,11 @@ void SettingsTab::create_tab_order_section() {
     description->set_markup("Configure which tabs are visible and their order:");
     description->set_halign(Gtk::ALIGN_START);
     description->set_margin_bottom(10);
-    
+
     // Add the tab list box
     tab_list_box_.set_margin_start(10);
     tab_list_box_.set_margin_end(10);
-    
+
     // Add components to the tab order box
     tab_order_box_.pack_start(tab_order_header_box_, Gtk::PACK_SHRINK);
     tab_order_box_.pack_start(*description, Gtk::PACK_SHRINK);
@@ -88,7 +93,7 @@ void SettingsTab::create_tab_order_section() {
 
     // Add the tab order box to the frame
     tab_order_frame_.add(tab_order_box_);
-    
+
     // Add the frame to the main box
     main_box_.pack_start(tab_order_frame_, Gtk::PACK_SHRINK);
 }
@@ -99,60 +104,60 @@ void SettingsTab::update_tab_list() {
         tab_list_box_.remove(row->row_box);
     }
     tab_rows_.clear();
-    
+
     // Get all tabs
     auto tabs = settings_->get_all_tabs();
-    
+
     // Create a row for each tab
     for (const auto& tab : tabs) {
         auto row = std::make_unique<TabRow>();
         row->id = tab.id;
-        
+
         // Set up the row box
         row->row_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         row->row_box.set_spacing(10);
         row->row_box.set_margin_bottom(5);
-        
+
         // Set up the enabled checkbox
         row->enabled_check.set_active(tab.enabled);
         row->enabled_check.signal_toggled().connect(
             [this, id = tab.id]() { on_tab_enabled_toggled(id); });
-        
+
         // Set up the name label with icon
         auto icon = Gtk::manage(new Gtk::Image());
         icon->set_from_icon_name(tab.icon_name, Gtk::ICON_SIZE_MENU);
         row->name_label.set_text(tab.name);
         row->name_label.set_xalign(0.0);
-        
+
         // Set up the up/down buttons
         row->up_button.set_image_from_icon_name("go-up-symbolic", Gtk::ICON_SIZE_BUTTON);
         row->up_button.set_tooltip_text("Move up");
         row->up_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsTab::on_move_up_clicked));
-        
+
         row->down_button.set_image_from_icon_name("go-down-symbolic", Gtk::ICON_SIZE_BUTTON);
         row->down_button.set_tooltip_text("Move down");
         row->down_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsTab::on_move_down_clicked));
-        
+
         // Add components to the row box
         row->row_box.pack_start(row->enabled_check, Gtk::PACK_SHRINK);
         row->row_box.pack_start(*icon, Gtk::PACK_SHRINK);
         row->row_box.pack_start(row->name_label, Gtk::PACK_EXPAND_WIDGET);
         row->row_box.pack_end(row->down_button, Gtk::PACK_SHRINK);
         row->row_box.pack_end(row->up_button, Gtk::PACK_SHRINK);
-        
+
         // Add the row to the list
         tab_list_box_.pack_start(row->row_box, Gtk::PACK_SHRINK);
-        
+
         // Store the row
         tab_rows_.push_back(std::move(row));
     }
-    
+
     // Update button sensitivity
     if (!tab_rows_.empty()) {
         tab_rows_.front()->up_button.set_sensitive(false);
         tab_rows_.back()->down_button.set_sensitive(false);
     }
-    
+
     show_all_children();
 }
 
@@ -162,6 +167,8 @@ void SettingsTab::on_move_up_clicked() {
         if (tab_rows_[i]->up_button.has_focus()) {
             // Move this tab up
             if (settings_->move_tab_up(tab_rows_[i]->id)) {
+                // Save settings immediately
+                settings_->save();
                 update_tab_list();
             }
             break;
@@ -175,6 +182,8 @@ void SettingsTab::on_move_down_clicked() {
         if (tab_rows_[i]->down_button.has_focus()) {
             // Move this tab down
             if (settings_->move_tab_down(tab_rows_[i]->id)) {
+                // Save settings immediately
+                settings_->save();
                 update_tab_list();
             }
             break;
@@ -186,21 +195,49 @@ void SettingsTab::on_tab_enabled_toggled(const std::string& tab_id) {
     // Find the row for this tab
     for (const auto& row : tab_rows_) {
         if (row->id == tab_id) {
+            bool enabled = row->enabled_check.get_active();
             // Update the setting
-            settings_->set_tab_enabled(tab_id, row->enabled_check.get_active());
+            settings_->set_tab_enabled(tab_id, enabled);
+            // Save settings immediately
+            settings_->save();
             break;
         }
     }
 }
 
 void SettingsTab::on_save_clicked() {
+
     // Save the settings
     settings_->save();
-    
-    // Notify that settings have changed
-    if (settings_changed_callback_) {
-        settings_changed_callback_();
+
+    // Show a message dialog to inform the user
+    Gtk::MessageDialog dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                             "Settings saved. The application will now restart to apply changes.",
+                             false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+    dialog.run();
+
+    // Get the path to the current executable
+    char exe_path[PATH_MAX];
+    ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
+    if (len != -1) {
+        exe_path[len] = '\0';
+
+        // Restart the application
+        std::cout << "Restarting application: " << exe_path << std::endl;
+
+        // Use execl to replace the current process with a new instance
+        // This is cleaner than using system() as it doesn't create a new process
+        execl(exe_path, exe_path, nullptr);
+
+        // If execl fails, print an error
+        std::cerr << "Failed to restart application: " << strerror(errno) << std::endl;
+    } else {
+        std::cerr << "Failed to get executable path: " << strerror(errno) << std::endl;
     }
+
+    // As a fallback, exit the application
+    // The user can restart it manually
+    std::exit(0);
 }
 
 void SettingsTab::set_settings_changed_callback(SettingsChangedCallback callback) {
