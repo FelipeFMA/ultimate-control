@@ -3,6 +3,7 @@
 
 #include <gtkmm.h>
 #include "PowerManager.hpp"
+#include "PowerSettingsDialog.hpp"
 #include <memory>
 
 namespace Power {
@@ -16,6 +17,8 @@ private:
     void create_system_section();
     void create_session_section();
     void create_power_profiles_section();
+    void on_settings_clicked();
+    void add_settings_button_to_header(Gtk::Box& header_box);
 
     std::shared_ptr<PowerManager> manager_;
 

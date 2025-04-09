@@ -4,6 +4,8 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <memory>
+#include "PowerSettings.hpp"
 
 namespace Power {
 
@@ -25,8 +27,12 @@ public:
 
     void set_update_callback(Callback cb);
 
+    // Get the power settings
+    std::shared_ptr<PowerSettings> get_settings() const;
+
 private:
     Callback callback_;
+    std::shared_ptr<PowerSettings> settings_;
     void notify();
 };
 

@@ -59,6 +59,9 @@ void PowerTab::create_system_section() {
     system_header_box_.pack_start(system_icon_, Gtk::PACK_SHRINK);
     system_header_box_.pack_start(system_label_, Gtk::PACK_EXPAND_WIDGET);
 
+    // Add settings button to the header
+    add_settings_button_to_header(system_header_box_);
+
     // Set up the system buttons
     system_buttons_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     system_buttons_box_.set_spacing(15);
@@ -144,8 +147,8 @@ void PowerTab::create_session_section() {
     lock_button_.set_image_from_icon_name("system-lock-screen-symbolic", Gtk::ICON_SIZE_BUTTON);
     lock_button_.set_always_show_image(true);
     lock_button_.set_tooltip_text("Lock the screen");
-    lock_button_.signal_clicked().connect([]() {
-        std::system("loginctl lock-session");
+    lock_button_.signal_clicked().connect([this]() {
+        std::system(manager_->get_settings()->get_command("lock").c_str());
     });
 
     // Add buttons to the box
@@ -240,6 +243,39 @@ void PowerTab::create_power_profiles_section() {
 
     // Add the profiles box to the frame
     profiles_frame_.add(profiles_box_);
+}
+
+void PowerTab::add_settings_button_to_header(Gtk::Box& header_box) {
+    // Create a settings button with a cog icon
+    auto settings_button = Gtk::make_managed<Gtk::Button>();
+    settings_button->set_relief(Gtk::RELIEF_NONE);
+    settings_button->set_tooltip_text("Configure power commands");
+
+    // Add a cog icon to the button
+    auto settings_icon = Gtk::make_managed<Gtk::Image>();
+    settings_icon->set_from_icon_name("emblem-system-symbolic", Gtk::ICON_SIZE_BUTTON);
+    settings_button->set_image(*settings_icon);
+
+    // Connect the button click signal
+    settings_button->signal_clicked().connect(sigc::mem_fun(*this, &PowerTab::on_settings_clicked));
+
+    // Add the button to the header box
+    header_box.pack_end(*settings_button, Gtk::PACK_SHRINK);
+}
+
+void PowerTab::on_settings_clicked() {
+    // Get the toplevel window
+    Gtk::Window* parent = dynamic_cast<Gtk::Window*>(get_toplevel());
+    if (!parent) return;
+
+    // Create and show the settings dialog
+    PowerSettingsDialog dialog(*parent, manager_->get_settings());
+    int result = dialog.run();
+
+    if (result == Gtk::RESPONSE_OK) {
+        // Save the settings
+        dialog.save_settings();
+    }
 }
 
 } // namespace Power

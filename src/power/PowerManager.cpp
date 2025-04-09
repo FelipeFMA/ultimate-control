@@ -8,26 +8,30 @@
 
 namespace Power {
 
-PowerManager::PowerManager() = default;
+PowerManager::PowerManager()
+: settings_(std::make_shared<PowerSettings>())
+{
+}
+
 PowerManager::~PowerManager() = default;
 
 void PowerManager::shutdown() {
-    std::system("systemctl poweroff");
+    std::system(settings_->get_command("shutdown").c_str());
     notify();
 }
 
 void PowerManager::reboot() {
-    std::system("systemctl reboot");
+    std::system(settings_->get_command("reboot").c_str());
     notify();
 }
 
 void PowerManager::suspend() {
-    std::system("systemctl suspend");
+    std::system(settings_->get_command("suspend").c_str());
     notify();
 }
 
 void PowerManager::hibernate() {
-    std::system("systemctl hibernate");
+    std::system(settings_->get_command("hibernate").c_str());
     notify();
 }
 
@@ -107,6 +111,10 @@ void PowerManager::notify() {
     if (callback_) {
         callback_();
     }
+}
+
+std::shared_ptr<PowerSettings> PowerManager::get_settings() const {
+    return settings_;
 }
 
 } // namespace Power
