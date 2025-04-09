@@ -3,6 +3,10 @@
 #include <memory>
 #include <map>
 #include <cstdlib>
+#include <string>
+#include <glibmm/optioncontext.h>
+#include <glibmm/optiongroup.h>
+#include <glibmm/optionentry.h>
 #include "volume/VolumeTab.hpp"
 #include "wifi/WifiTab.hpp"
 #include "display/DisplayTab.hpp"
@@ -13,7 +17,9 @@
 
 class MainWindow : public Gtk::Window {
 public:
-    MainWindow() {
+    MainWindow(const std::string& initial_tab = "") {
+        initial_tab_ = initial_tab;
+        prevent_auto_loading_ = !initial_tab_.empty();
         set_title("Ultimate Control");
         set_default_size(800, 600);
 
@@ -48,6 +54,26 @@ public:
 
         // Show all children
         show_all_children();
+
+        // Switch to the initial tab if specified
+        if (!initial_tab_.empty()) {
+            switch_to_tab(initial_tab_);
+        }
+    }
+
+    // Switch to a specific tab by ID
+    void switch_to_tab(const std::string& tab_id) {
+        // Find the tab
+        auto it = tab_widgets_.find(tab_id);
+        if (it != tab_widgets_.end()) {
+            // Load the tab content if not already loaded
+            if (!it->second.loaded) {
+                load_tab_content(tab_id, it->second.page_num);
+            }
+
+            // Set the current page
+            notebook_.set_current_page(it->second.page_num);
+        }
     }
 
 private:
@@ -60,6 +86,11 @@ private:
 
         // Get tab order from settings
         auto tab_order = tab_settings_->get_tab_order();
+
+        // If we have an initial tab specified, make sure it's enabled
+        if (!initial_tab_.empty()) {
+            tab_settings_->set_tab_enabled(initial_tab_, true);
+        }
 
         // Create tabs in the specified order
         for (const auto& tab_id : tab_order) {
@@ -116,6 +147,23 @@ private:
         static bool loading = false;
         if (loading) {
             return;
+        }
+
+        // If we're preventing auto-loading (e.g., when starting with a specific tab),
+        // don't load other tabs automatically
+        if (prevent_auto_loading_) {
+            // Only allow loading the initial tab
+            std::string current_tab;
+            for (const auto& [id, info] : tab_widgets_) {
+                if (info.page_num == static_cast<int>(page_num)) {
+                    current_tab = id;
+                    break;
+                }
+            }
+
+            if (current_tab != initial_tab_) {
+                return;
+            }
         }
 
         // Find which tab was selected
@@ -222,14 +270,32 @@ private:
     }
 
     void reload_tabs() {
-        // Save the current page
+        // Save the current page or use the initial tab
         int current_page = notebook_.get_current_page();
+        std::string current_tab;
+
+        // Find which tab is currently selected
+        for (const auto& [id, info] : tab_widgets_) {
+            if (info.page_num == current_page) {
+                current_tab = id;
+                break;
+            }
+        }
+
+        // If we have an initial tab and this is the first load, use that
+        if (!initial_tab_.empty() && current_tab.empty()) {
+            current_tab = initial_tab_;
+        }
 
         // Recreate tabs
         create_tabs();
 
-        // Restore the current page if possible
-        if (current_page >= 0 && current_page < notebook_.get_n_pages()) {
+        // Restore the current tab if possible
+        if (!current_tab.empty()) {
+            switch_to_tab(current_tab);
+        }
+        // Otherwise restore by page number
+        else if (current_page >= 0 && current_page < notebook_.get_n_pages()) {
             notebook_.set_current_page(current_page);
         }
     }
@@ -238,6 +304,8 @@ private:
     Gtk::Box vbox_;
     Gtk::Notebook notebook_;
     std::shared_ptr<Settings::TabSettings> tab_settings_;
+    std::string initial_tab_;
+    bool prevent_auto_loading_ = false;
 
     // Structure to track tab widgets and loading state
     struct TabInfo {
@@ -250,7 +318,78 @@ private:
 };
 
 int main(int argc, char* argv[]) {
+    // Define our command-line options
+    Glib::OptionContext context;
+    Glib::OptionGroup group("options", "Application Options", "Application options");
+
+    // Variables to store option values
+    bool volume_opt = false;
+    bool wifi_opt = false;
+    bool display_opt = false;
+    bool power_opt = false;
+    bool settings_opt = false;
+
+    // Define the command-line entries
+    Glib::OptionEntry volume_entry;
+    volume_entry.set_long_name("volume");
+    volume_entry.set_short_name('v');
+    volume_entry.set_description("Start with the Volume tab selected");
+    group.add_entry(volume_entry, volume_opt);
+
+    Glib::OptionEntry wifi_entry;
+    wifi_entry.set_long_name("wifi");
+    wifi_entry.set_short_name('w');
+    wifi_entry.set_description("Start with the WiFi tab selected");
+    group.add_entry(wifi_entry, wifi_opt);
+
+    Glib::OptionEntry display_entry;
+    display_entry.set_long_name("display");
+    display_entry.set_short_name('d');
+    display_entry.set_description("Start with the Display tab selected");
+    group.add_entry(display_entry, display_opt);
+
+    Glib::OptionEntry power_entry;
+    power_entry.set_long_name("power");
+    power_entry.set_short_name('p');
+    power_entry.set_description("Start with the Power tab selected");
+    group.add_entry(power_entry, power_opt);
+
+    Glib::OptionEntry settings_entry;
+    settings_entry.set_long_name("settings");
+    settings_entry.set_short_name('s');
+    settings_entry.set_description("Start with the Settings tab selected");
+    group.add_entry(settings_entry, settings_opt);
+
+    // Add the option group to the context
+    context.set_main_group(group);
+
+    try {
+        context.parse(argc, argv);
+    } catch (const Glib::Error& error) {
+        std::cerr << "Error parsing command line: " << error.what() << std::endl;
+        return 1;
+    }
+
+    // Determine which tab to show initially
+    std::string initial_tab;
+    if (volume_opt) {
+        initial_tab = "volume";
+    } else if (wifi_opt) {
+        initial_tab = "wifi";
+    } else if (display_opt) {
+        initial_tab = "display";
+    } else if (power_opt) {
+        initial_tab = "power";
+    } else if (settings_opt) {
+        initial_tab = "settings";
+    }
+
+    // Initialize GTK application
     auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
-    MainWindow window;
+
+    // Create the main window with the initial tab
+    MainWindow window(initial_tab);
+
+    // Run the application
     return app->run(window);
 }
