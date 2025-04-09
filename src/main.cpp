@@ -4,9 +4,13 @@
 #include <map>
 #include <cstdlib>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <atomic>
 #include <glibmm/optioncontext.h>
 #include <glibmm/optiongroup.h>
 #include <glibmm/optionentry.h>
+#include <glibmm/dispatcher.h>
 #include "volume/VolumeTab.hpp"
 #include "wifi/WifiTab.hpp"
 #include "display/DisplayTab.hpp"
@@ -68,9 +72,11 @@ public:
         // Find the tab
         auto it = tab_widgets_.find(tab_id);
         if (it != tab_widgets_.end()) {
-            // Load the tab content if not already loaded
-            if (!it->second.loaded) {
-                load_tab_content(tab_id, it->second.page_num);
+            // Load the tab content if not already loaded or loading
+            if (!it->second.loaded && !it->second.loading) {
+                // Show loading indicator and start async loading
+                show_loading_indicator(tab_id, it->second.page_num);
+                load_tab_content_async(tab_id, it->second.page_num);
             }
 
             // Set the current page
@@ -141,7 +147,12 @@ private:
         int page_num = notebook_.append_page(*widget, *box);
 
         // Store the widget and page number
-        tab_widgets_[id] = TabInfo{widget, page_num, false};
+        tab_widgets_[id] = TabInfo{widget, page_num, false, false};
+
+        // Create a dispatcher for this tab
+        tab_loaded_dispatchers_[id].connect([this, id]() {
+            on_tab_loaded(id);
+        });
     }
 
     void on_tab_switch(Gtk::Widget* page, guint page_num) {
@@ -170,10 +181,13 @@ private:
 
         // Find which tab was selected
         std::string tab_id_to_load;
-        for (const auto& [id, info] : tab_widgets_) {
-            if (info.page_num == static_cast<int>(page_num) && !info.loaded) {
-                tab_id_to_load = id;
-                break;
+        {
+            std::lock_guard<std::mutex> lock(tab_mutex_);
+            for (const auto& [id, info] : tab_widgets_) {
+                if (info.page_num == static_cast<int>(page_num) && !info.loaded && !info.loading) {
+                    tab_id_to_load = id;
+                    break;
+                }
             }
         }
 
@@ -185,7 +199,9 @@ private:
             // Use a single-shot timer to delay loading slightly
             // This helps avoid GTK+ issues during tab switching
             Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]() {
-                load_tab_content(tab_id_to_load, page_num);
+                // Show loading indicator and start async loading
+                show_loading_indicator(tab_id_to_load, page_num);
+                load_tab_content_async(tab_id_to_load, page_num);
             }, 50);
 
             // Reset loading flag after a short delay
@@ -196,7 +212,232 @@ private:
         }
     }
 
+    // Create a loading indicator widget
+    Gtk::Widget* create_loading_indicator() {
+        auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 10);
+        box->set_halign(Gtk::ALIGN_CENTER);
+        box->set_valign(Gtk::ALIGN_CENTER);
+
+        // Add a spinner
+        auto spinner = Gtk::make_managed<Gtk::Spinner>();
+        spinner->set_size_request(32, 32);
+        spinner->start();
+        box->pack_start(*spinner, Gtk::PACK_SHRINK);
+
+        // Add a loading label
+        auto label = Gtk::make_managed<Gtk::Label>("Loading...");
+        box->pack_start(*label, Gtk::PACK_SHRINK);
+
+        box->show_all();
+        return box;
+    }
+
+    // Show loading indicator for a tab
+    void show_loading_indicator(const std::string& id, int page_num) {
+        std::lock_guard<std::mutex> lock(tab_mutex_);
+
+        // Check if already loaded or loading
+        if (tab_widgets_[id].loaded || tab_widgets_[id].loading) {
+            return;
+        }
+
+        // Make sure the tab exists in the notebook
+        if (tab_widgets_.find(id) == tab_widgets_.end()) {
+            return;
+        }
+
+        // Make sure the page number is valid
+        if (page_num < 0 || page_num >= notebook_.get_n_pages()) {
+            return;
+        }
+
+        // Mark as loading
+        tab_widgets_[id].loading = true;
+
+        // Create a loading indicator
+        auto loading_indicator = create_loading_indicator();
+
+        // Get the icon name and label text for the tab
+        std::string icon_name;
+        std::string label_text;
+
+        if (id == "volume") {
+            icon_name = "audio-volume-high-symbolic";
+            label_text = "Volume";
+        } else if (id == "wifi") {
+            icon_name = "network-wireless-symbolic";
+            label_text = "WiFi";
+        } else if (id == "display") {
+            icon_name = "video-display-symbolic";
+            label_text = "Display";
+        } else if (id == "power") {
+            icon_name = "system-shutdown-symbolic";
+            label_text = "Power";
+        } else if (id == "settings") {
+            icon_name = "preferences-system-symbolic";
+            label_text = "Settings";
+        } else {
+            // Unknown tab
+            tab_widgets_[id].loading = false;
+            return;
+        }
+
+        try {
+            // Create a new tab label with icon
+            auto box = create_tab_label(icon_name, label_text);
+
+            // Replace the placeholder with the loading indicator
+            notebook_.remove_page(page_num);
+
+            // Insert the loading indicator
+            int new_page_num = notebook_.insert_page(*loading_indicator, *box, page_num);
+
+            // Show the loading indicator
+            loading_indicator->show_all();
+
+            // Update the tab info
+            tab_widgets_[id].widget = loading_indicator;
+            tab_widgets_[id].page_num = new_page_num;
+
+            // Set the current page
+            notebook_.set_current_page(new_page_num);
+        } catch (const std::exception& e) {
+            std::cerr << "Error showing loading indicator for tab " << id << ": " << e.what() << std::endl;
+            tab_widgets_[id].loading = false;
+        } catch (...) {
+            std::cerr << "Unknown error showing loading indicator for tab " << id << std::endl;
+            tab_widgets_[id].loading = false;
+        }
+    }
+
+    // Load tab content asynchronously
+    void load_tab_content_async(const std::string& id, int page_num) {
+        // Check if already loaded or loading
+        {
+            std::lock_guard<std::mutex> lock(tab_mutex_);
+            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end())) {
+                return;
+            }
+        }
+
+        // Use a timeout to simulate asynchronous loading
+        // This keeps the UI responsive while the tab is "loading"
+        Glib::signal_timeout().connect_once([this, id, page_num]() {
+            // This runs in the main thread after a short delay
+            // Create the actual tab content
+            create_tab_content(id, page_num);
+        }, 100); // Short delay to allow UI to update
+    }
+
+    // Create tab content in the main thread
+    void create_tab_content(const std::string& id, int page_num) {
+        // Check if already loaded
+        {
+            std::lock_guard<std::mutex> lock(tab_mutex_);
+            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end())) {
+                return;
+            }
+        }
+
+        try {
+            // Create the actual tab content
+            Gtk::Widget* content = nullptr;
+            std::string icon_name;
+            std::string label_text;
+
+            if (id == "volume") {
+                content = Gtk::make_managed<Volume::VolumeTab>();
+                icon_name = "audio-volume-high-symbolic";
+                label_text = "Volume";
+            } else if (id == "wifi") {
+                content = Gtk::make_managed<Wifi::WifiTab>();
+                icon_name = "network-wireless-symbolic";
+                label_text = "WiFi";
+            } else if (id == "display") {
+                content = Gtk::make_managed<Display::DisplayTab>();
+                icon_name = "video-display-symbolic";
+                label_text = "Display";
+            } else if (id == "power") {
+                content = Gtk::make_managed<Power::PowerTab>();
+                icon_name = "system-shutdown-symbolic";
+                label_text = "Power";
+            } else if (id == "settings") {
+                auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
+                settings_tab->set_settings_changed_callback([this]() {
+                    // This callback is no longer needed as the app restarts
+                    // but we keep it for compatibility
+                    reload_tabs();
+                });
+                content = settings_tab;
+                icon_name = "preferences-system-symbolic";
+                label_text = "Settings";
+            } else {
+                // Unknown tab
+                std::lock_guard<std::mutex> lock(tab_mutex_);
+                tab_widgets_[id].loading = false;
+                tab_load_errors_[id] = "Unknown tab type";
+                return;
+            }
+
+            // Get the current page number for this tab
+            int current_page_num;
+            {
+                std::lock_guard<std::mutex> lock(tab_mutex_);
+                current_page_num = tab_widgets_[id].page_num;
+            }
+
+            // Create a new tab label with icon
+            auto box = create_tab_label(icon_name, label_text);
+
+            // Replace the loading indicator with the actual content
+            notebook_.remove_page(current_page_num);
+
+            // Insert the new content
+            int new_page_num = notebook_.insert_page(*content, *box, current_page_num);
+
+            // Show the new content
+            content->show_all();
+
+            // Update the tab info
+            {
+                std::lock_guard<std::mutex> lock(tab_mutex_);
+                tab_widgets_[id].widget = content;
+                tab_widgets_[id].page_num = new_page_num;
+                tab_widgets_[id].loaded = true;
+                tab_widgets_[id].loading = false;
+            }
+
+            // Set the current page
+            notebook_.set_current_page(new_page_num);
+
+            // Notify that the tab has been loaded
+            tab_loaded_dispatchers_[id].emit();
+
+        } catch (const std::exception& e) {
+            std::lock_guard<std::mutex> lock(tab_mutex_);
+            tab_widgets_[id].loading = false;
+            tab_load_errors_[id] = e.what();
+            std::cerr << "Error creating tab " << id << ": " << e.what() << std::endl;
+        } catch (...) {
+            std::lock_guard<std::mutex> lock(tab_mutex_);
+            tab_widgets_[id].loading = false;
+            tab_load_errors_[id] = "Unknown error";
+            std::cerr << "Unknown error creating tab " << id << std::endl;
+        }
+    }
+
+    // Called when a tab has finished loading
+    void on_tab_loaded(const std::string& id) {
+        // This method is called via the dispatcher when a tab is fully loaded
+        // We can use it for any post-loading operations
+        std::cout << "Tab " << id << " loaded successfully" << std::endl;
+    }
+
+    // Legacy synchronous loading method (kept for reference)
     void load_tab_content(const std::string& id, int page_num) {
+        // This method is kept for reference but is no longer used directly
+        // We now use load_tab_content_async instead
+
         // Check if already loaded
         if (tab_widgets_[id].loaded) {
             return;
@@ -315,8 +556,14 @@ private:
         Gtk::Widget* widget;
         int page_num;
         bool loaded;
+        bool loading;  // Flag to indicate if the tab is currently being loaded
     };
     std::map<std::string, TabInfo> tab_widgets_;
+
+    // Asynchronous loading components
+    std::mutex tab_mutex_;
+    std::map<std::string, Glib::Dispatcher> tab_loaded_dispatchers_;
+    std::map<std::string, std::string> tab_load_errors_;
 
 };
 
