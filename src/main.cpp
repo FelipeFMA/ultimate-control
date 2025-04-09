@@ -17,8 +17,9 @@
 
 class MainWindow : public Gtk::Window {
 public:
-    MainWindow(const std::string& initial_tab = "") {
+    MainWindow(const std::string& initial_tab = "", bool minimal_mode = false) {
         initial_tab_ = initial_tab;
+        minimal_mode_ = minimal_mode;
         prevent_auto_loading_ = !initial_tab_.empty();
         set_title("Ultimate Control");
         set_default_size(800, 600);
@@ -27,6 +28,7 @@ public:
         add(vbox_);
 
         notebook_.set_scrollable(true);
+        notebook_.set_show_tabs(!minimal_mode_);
         vbox_.pack_start(notebook_, Gtk::PACK_EXPAND_WIDGET);
 
         // Initialize tab settings
@@ -306,6 +308,7 @@ private:
     std::shared_ptr<Settings::TabSettings> tab_settings_;
     std::string initial_tab_;
     bool prevent_auto_loading_ = false;
+    bool minimal_mode_ = false;
 
     // Structure to track tab widgets and loading state
     struct TabInfo {
@@ -328,6 +331,7 @@ int main(int argc, char* argv[]) {
     bool display_opt = false;
     bool power_opt = false;
     bool settings_opt = false;
+    bool minimal_opt = false;
 
     // Define the command-line entries
     Glib::OptionEntry volume_entry;
@@ -360,6 +364,12 @@ int main(int argc, char* argv[]) {
     settings_entry.set_description("Start with the Settings tab selected");
     group.add_entry(settings_entry, settings_opt);
 
+    Glib::OptionEntry minimal_entry;
+    minimal_entry.set_long_name("minimal");
+    minimal_entry.set_short_name('m');
+    minimal_entry.set_description("Start in minimal mode with notebook tabs hidden");
+    group.add_entry(minimal_entry, minimal_opt);
+
     // Add the option group to the context
     context.set_main_group(group);
 
@@ -387,8 +397,8 @@ int main(int argc, char* argv[]) {
     // Initialize GTK application
     auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
 
-    // Create the main window with the initial tab
-    MainWindow window(initial_tab);
+    // Create the main window with the initial tab and minimal mode setting
+    MainWindow window(initial_tab, minimal_opt);
 
     // Run the application
     return app->run(window);
