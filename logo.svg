@@ -1,0 +1,56 @@
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Engrenagem com formato tradicional e trapezóides para os dentes -->
+  <g transform="translate(150, 150)">
+    <!-- Base circular da engrenagem -->
+    <circle cx="0" cy="0" r="75" fill="#3c3836" stroke="#666666" stroke-width="2"/>
+    
+    <!-- Dentes da engrenagem - 16 dentes trapezoidais mais realistas -->
+    <g fill="#2c2c2c" stroke="#666666" stroke-width="1.5">
+      <!-- Dente 1 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(0)"/>
+      <!-- Dente 2 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(22.5)"/>
+      <!-- Dente 3 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(45)"/>
+      <!-- Dente 4 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(67.5)"/>
+      <!-- Dente 5 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(90)"/>
+      <!-- Dente 6 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(112.5)"/>
+      <!-- Dente 7 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(135)"/>
+      <!-- Dente 8 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(157.5)"/>
+      <!-- Dente 9 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(180)"/>
+      <!-- Dente 10 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(202.5)"/>
+      <!-- Dente 11 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(225)"/>
+      <!-- Dente 12 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(247.5)"/>
+      <!-- Dente 13 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(270)"/>
+      <!-- Dente 14 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(292.5)"/>
+      <!-- Dente 15 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(315)"/>
+      <!-- Dente 16 -->
+      <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(337.5)"/>
+    </g>
+    
+    <!-- Anel interno para dar profundidade -->
+    <circle cx="0" cy="0" r="60" fill="#272727" stroke="#666666" stroke-width="1.5"/>
+  </g>
+  
+  <!-- Letra U (verde) -->
+  <path d="M125,120 L125,170 Q125,185 140,185 L160,185 Q175,185 175,170 L175,120" fill="none" stroke="#8ec07c" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Letra C (vermelha) -->
+  <path d="M160,130 Q160,115 150,115 Q140,115 140,130 L140,160 Q140,175 150,175 Q160,175 160,160" fill="none" stroke="#fb4934" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Buraco central com aparência metálica -->
+  <circle cx="150" cy="150" r="15" fill="#ebdbb2" stroke="#666666" stroke-width="2"/>
+  <circle cx="150" cy="150" r="7" fill="#504945"/>
+</svg>
