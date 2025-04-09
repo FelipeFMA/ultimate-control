@@ -12,7 +12,8 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
   ssid_label_(network.ssid),
   signal_label_(std::to_string(network.signal_strength) + "%"),
   status_label_(network.connected ? "Connected" : (network.secured ? "Secured" : "Open")),
-  connect_button_()
+  connect_button_(),
+  forget_button_()
 {
     // Set up the main container
     set_margin_start(10);
@@ -66,8 +67,14 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
         connect_button_.set_label("Connect");
     }
 
+    // Set up the forget button with an icon
+    forget_button_.set_image_from_icon_name("user-trash-symbolic", Gtk::ICON_SIZE_BUTTON);
+    forget_button_.set_label("Forget");
+    forget_button_.set_tooltip_text("Forget this network");
+
     // Add controls to the controls box
     controls_box_.pack_end(connect_button_, Gtk::PACK_SHRINK);
+    controls_box_.pack_start(forget_button_, Gtk::PACK_SHRINK);
 
     // Add all components to the inner box
     inner_box->pack_start(network_info_box_, Gtk::PACK_SHRINK);
@@ -76,6 +83,7 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
 
     // Connect signals
     connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_connect_clicked));
+    forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
 
     show_all_children();
 }
@@ -173,6 +181,32 @@ void WifiNetworkWidget::on_connect_clicked() {
             }
         }
         manager_->connect(network_.ssid, password);
+    }
+}
+
+void WifiNetworkWidget::on_forget_clicked() {
+    // Create a confirmation dialog
+    Gtk::MessageDialog dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                             "Are you sure you want to forget this network?",
+                             false, Gtk::MESSAGE_QUESTION, Gtk::BUTTONS_YES_NO, true);
+
+    // Add network name to the dialog
+    Gtk::Box* content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 10));
+    Gtk::Image* wifi_icon = Gtk::manage(new Gtk::Image());
+    wifi_icon->set_from_icon_name("network-wireless-symbolic", Gtk::ICON_SIZE_DIALOG);
+    content_box->pack_start(*wifi_icon, Gtk::PACK_SHRINK);
+
+    Gtk::Label* network_label = Gtk::manage(new Gtk::Label());
+    network_label->set_markup("<b>" + network_.ssid + "</b>");
+    network_label->set_halign(Gtk::ALIGN_START);
+    content_box->pack_start(*network_label, Gtk::PACK_SHRINK);
+
+    dialog.get_content_area()->pack_start(*content_box, Gtk::PACK_SHRINK);
+    dialog.show_all_children();
+
+    int result = dialog.run();
+    if (result == Gtk::RESPONSE_YES) {
+        manager_->forget_network(network_.ssid);
     }
 }
 

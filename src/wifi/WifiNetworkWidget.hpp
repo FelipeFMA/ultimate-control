@@ -14,6 +14,7 @@ public:
 
 private:
     void on_connect_clicked();
+    void on_forget_clicked();
     void update_signal_icon(int signal_strength);
     void update_security_icon(bool secured);
     void update_connection_status(bool connected);
@@ -35,6 +36,7 @@ private:
 
     // Control widgets
     Gtk::Button connect_button_;
+    Gtk::Button forget_button_;
 };
 
 } // namespace Wifi

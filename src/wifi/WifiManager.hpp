@@ -28,6 +28,7 @@ public:
     void scan_networks();
     void connect(const std::string& ssid, const std::string& password);
     void disconnect();
+    void forget_network(const std::string& ssid);
     void enable_wifi();
     void disable_wifi();
     bool is_wifi_enabled() const;

@@ -76,6 +76,12 @@ public:
         scan_networks();
     }
 
+    void forget_network(const std::string& ssid) {
+        std::string cmd = "nmcli connection delete \"" + ssid + "\"";
+        std::system(cmd.c_str());
+        scan_networks();
+    }
+
     void enable_wifi() {
         std::string cmd = "nmcli radio wifi on";
         int ret = std::system(cmd.c_str());
@@ -172,6 +178,10 @@ void WifiManager::connect(const std::string& ssid, const std::string& password) 
 
 void WifiManager::disconnect() {
     impl_->disconnect();
+}
+
+void WifiManager::forget_network(const std::string& ssid) {
+    impl_->forget_network(ssid);
 }
 
 void WifiManager::enable_wifi() {
