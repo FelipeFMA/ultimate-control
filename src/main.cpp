@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <map>
+#include <cstdlib>
 #include "volume/VolumeTab.hpp"
 #include "wifi/WifiTab.hpp"
 #include "display/DisplayTab.hpp"
@@ -39,10 +40,10 @@ public:
         add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
 
         // Connect to the delete event signal
-        signal_delete_event().connect([this](GdkEventAny* event) -> bool {
-            // Properly quit the application when the window is closed
-            Gtk::Main::quit();
-            return false; // Allow the default handler to run
+        signal_delete_event().connect([](GdkEventAny* event) -> bool {
+            // Force exit the application
+            std::quick_exit(0);
+            return true; // Prevent the default handler from running
         });
 
         // Show all children
@@ -249,9 +250,7 @@ private:
 };
 
 int main(int argc, char* argv[]) {
-    Gtk::Main kit(argc, argv);
+    auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
     MainWindow window;
-    window.show();
-    Gtk::Main::run(window);
-    return 0;
+    return app->run(window);
 }
