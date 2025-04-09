@@ -117,9 +117,9 @@ public:
         int vol = std::max(0, std::min(100, volume));
         std::string cmd;
         if (sink_name.find("input") != std::string::npos || sink_name.find("source") != std::string::npos) {
-            cmd = "pactl set-source-volume @DEFAULT_SOURCE@ " + std::to_string(vol) + "%";
+            cmd = "pactl set-source-volume " + sink_name + " " + std::to_string(vol) + "%";
         } else {
-            cmd = "pactl set-sink-volume @DEFAULT_SINK@ " + std::to_string(vol) + "%";
+            cmd = "pactl set-sink-volume " + sink_name + " " + std::to_string(vol) + "%";
         }
         int ret = std::system(cmd.c_str());
         if (ret != 0) {
@@ -131,9 +131,9 @@ public:
     void toggle_mute(const std::string& sink_name) {
         std::string cmd;
         if (sink_name.find("input") != std::string::npos || sink_name.find("source") != std::string::npos) {
-            cmd = "pactl set-source-mute @DEFAULT_SOURCE@ toggle";
+            cmd = "pactl set-source-mute " + sink_name + " toggle";
         } else {
-            cmd = "pactl set-sink-mute @DEFAULT_SINK@ toggle";
+            cmd = "pactl set-sink-mute " + sink_name + " toggle";
         }
         int ret = std::system(cmd.c_str());
         if (ret != 0) {
