@@ -16,9 +16,15 @@ public:
 
 private:
     void update_network_list(const std::vector<Network>& networks);
+    void update_wifi_state(bool enabled);
+    void on_wifi_switch_toggled();
 
     std::shared_ptr<WifiManager> manager_;
     Gtk::Box container_;
+    Gtk::Button scan_button_;
+    Gtk::Switch wifi_switch_;
+    Gtk::Label wifi_status_label_;
+    Gtk::Image wifi_status_icon_;
     std::vector<std::unique_ptr<WifiNetworkWidget>> widgets_;
 };
 

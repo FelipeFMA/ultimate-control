@@ -14,13 +14,26 @@ public:
 
 private:
     void on_connect_clicked();
+    void update_signal_icon(int signal_strength);
+    void update_security_icon(bool secured);
+    void update_connection_status(bool connected);
 
     std::shared_ptr<WifiManager> manager_;
     Network network_;
 
+    // Main layout containers
+    Gtk::Box network_info_box_;
+    Gtk::Box controls_box_;
+
+    // Network information widgets
+    Gtk::Image signal_icon_;
+    Gtk::Image security_icon_;
+    Gtk::Image status_icon_;
     Gtk::Label ssid_label_;
     Gtk::Label signal_label_;
     Gtk::Label status_label_;
+
+    // Control widgets
     Gtk::Button connect_button_;
 };
 
