@@ -146,35 +146,96 @@ better_control.py     * @param floating_mode Whether to make the window float on
      *
      * Creates a button that opens the settings window when clicked.
      */
+    /**
+     * @brief Simple class for a rotating settings icon using CSS animations
+     */
+    class RotatingSettingsIcon : public Gtk::Image {
+    public:
+        /**
+         * @brief Constructor
+         */
+        RotatingSettingsIcon() : animating_(false) {
+            // Set the icon and prepare CSS animation
+            set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_MENU);
+            set_name("settings-icon");
+
+            // Create and load CSS for the rotation animation
+            css_provider_ = Gtk::CssProvider::create();
+
+            // Simple CSS for rotation animation
+            const std::string css = ""
+                "#settings-icon {"
+                "    transition: all 200ms ease;"
+                "}"
+                "#settings-icon.rotate-active {"
+                "    -gtk-icon-transform: rotate(360deg);"
+                "    transition: all 600ms ease;"
+                "}";
+
+            try {
+                css_provider_->load_from_data(css);
+                get_style_context()->add_provider(css_provider_, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+            } catch (const Glib::Error& ex) {
+                std::cerr << "Error loading CSS: " << ex.what() << std::endl;
+            }
+        }
+
+        /**
+         * @brief Start the rotation animation
+         */
+        void start_animation() {
+            if (animating_) return;
+            animating_ = true;
+            get_style_context()->add_class("rotate-active");
+        }
+
+        /**
+         * @brief Reset the rotation animation
+         */
+        void reset_animation() {
+            get_style_context()->remove_class("rotate-active");
+            animating_ = false;
+        }
+
+    private:
+        bool animating_;
+        Glib::RefPtr<Gtk::CssProvider> css_provider_;
+    };
+
     void create_settings_button() {
-        // Create a settings button with an icon
+        // Create a settings button with our custom rotating icon
         auto settings_button = Gtk::make_managed<Gtk::Button>();
-        settings_button->set_image_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_MENU);
         settings_button->set_tooltip_text("Settings");
         settings_button->set_relief(Gtk::RELIEF_NONE);
 
-        // Create a box to hold the button
+        auto rotating_icon = Gtk::make_managed<RotatingSettingsIcon>();
+        settings_button->add(*rotating_icon);
+
+        // Add the button to the notebook
         auto button_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
         button_box->pack_start(*settings_button, Gtk::PACK_SHRINK);
         button_box->set_margin_end(5);
-
-        // Add the button box to the right side of the notebook
         notebook_.set_action_widget(button_box, Gtk::PACK_END);
         button_box->show_all();
 
-        // Connect the button click signal to open the settings window
-        settings_button->signal_clicked().connect([this]() {
-            // Create a settings window if it doesn't exist yet
+        // Connect click handler to open settings and animate icon
+        settings_button->signal_clicked().connect([this, rotating_icon]() {
+            rotating_icon->start_animation();
+
             if (!settings_window_) {
                 settings_window_ = std::make_unique<Settings::SettingsWindow>();
+
+                // Reset animation when settings window closes
+                settings_window_->signal_hide().connect([rotating_icon]() {
+                    rotating_icon->reset_animation();
+                });
+
                 settings_window_->set_settings_changed_callback([this]() {
-                    // Restart the application when settings change
                     std::cout << "Settings changed, restart required" << std::endl;
-                    std::quick_exit(42); // Exit with a special code to indicate restart
+                    std::quick_exit(42);
                 });
             }
 
-            // Show the settings window
             settings_window_->present();
         });
     }
