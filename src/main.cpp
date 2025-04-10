@@ -1,3 +1,11 @@
+/**
+ * @file main.cpp
+ * @brief Main application entry point for Ultimate Control
+ *
+ * This file contains the MainWindow class which manages the tab-based UI
+ * and implements lazy loading of tab content for better performance.
+ */
+
 #include <gtkmm.h>
 #include <iostream>
 #include <memory>
@@ -17,8 +25,21 @@
 #include "settings/TabSettings.hpp"
 #include "core/Settings.hpp"
 
+/**
+ * @class MainWindow
+ * @brief Main application window that manages tabs and lazy loading
+ *
+ * The MainWindow class handles the creation and management of tabs,
+ * implements lazy loading for better performance, and provides
+ * functionality for switching between tabs.
+ */
 class MainWindow : public Gtk::Window {
 public:
+    /**
+     * @brief Constructor for MainWindow
+     * @param initial_tab Tab ID to select on startup (empty for default)
+     * @param minimal_mode Whether to hide the tab bar
+     */
     MainWindow(const std::string& initial_tab = "", bool minimal_mode = false) {
         initial_tab_ = initial_tab;
         minimal_mode_ = minimal_mode;
@@ -33,7 +54,7 @@ public:
         notebook_.set_show_tabs(!minimal_mode_);
         vbox_.pack_start(notebook_, Gtk::PACK_EXPAND_WIDGET);
 
-        // Initialize tab settings
+        // Load tab configuration from settings
         tab_settings_ = std::make_shared<Settings::TabSettings>();
 
         // Connect to tab switch signal for lazy loading
@@ -42,17 +63,14 @@ public:
         // Create tab placeholders
         create_tabs();
 
-        // Create a placeholder for the settings tab
+        // Create and add settings tab placeholder
         auto settings_placeholder = Gtk::make_managed<Gtk::Box>();
         settings_placeholder->set_size_request(100, 100);
-
-        // Add settings tab placeholder
         add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
 
-        // Connect to the delete event signal
+        // Handle window close event with quick exit to avoid hanging
         signal_delete_event().connect([](GdkEventAny* event) -> bool {
-            // Force exit the application
-            std::quick_exit(0);
+            std::quick_exit(0); // Force immediate exit without cleanup
             return true; // Prevent the default handler from running
         });
 
@@ -65,9 +83,14 @@ public:
         }
     }
 
-    // Switch to a specific tab by ID
+    /**
+     * @brief Switch to a specific tab by ID
+     * @param tab_id The ID of the tab to switch to
+     *
+     * If the tab content isn't loaded yet, this will trigger the loading process
+     */
     void switch_to_tab(const std::string& tab_id) {
-        // Find the tab
+        // Find the tab in our map of tab widgets
         auto it = tab_widgets_.find(tab_id);
         if (it != tab_widgets_.end()) {
             // Load the tab content if not already loaded or loading
@@ -77,12 +100,18 @@ public:
                 load_tab_content_async(tab_id, it->second.page_num);
             }
 
-            // Set the current page
+            // Switch to the requested tab
             notebook_.set_current_page(it->second.page_num);
         }
     }
 
 private:
+    /**
+     * @brief Create all tabs according to settings
+     *
+     * Creates tab placeholders in the order specified by settings.
+     * Actual tab content is loaded lazily when the tab is selected.
+     */
     void create_tabs() {
         // Clear existing tabs
         while (notebook_.get_n_pages() > 0) {
@@ -97,8 +126,6 @@ private:
         if (!initial_tab_.empty()) {
             tab_settings_->set_tab_enabled(initial_tab_, true);
         }
-
-        // Create tabs in the specified order
         for (const auto& tab_id : tab_order) {
             if (tab_id == "settings") {
                 continue; // Settings tab is added separately
@@ -125,8 +152,14 @@ private:
         }
     }
 
+    /**
+     * @brief Create a tab label with an icon and text
+     * @param icon_name Name of the icon to use
+     * @param label_text Text to display in the tab
+     * @return Pointer to the created Gtk::Box containing the icon and label
+     */
     Gtk::Box* create_tab_label(const std::string& icon_name, const std::string& label_text) {
-        // Create tab label with icon
+        // Create horizontal box to hold icon and label
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
         auto icon = Gtk::make_managed<Gtk::Image>();
         icon->set_from_icon_name(icon_name, Gtk::ICON_SIZE_SMALL_TOOLBAR);
@@ -137,8 +170,15 @@ private:
         return box;
     }
 
+    /**
+     * @brief Add a tab to the notebook
+     * @param id Unique identifier for the tab
+     * @param widget Widget to display in the tab
+     * @param icon_name Name of the icon to use in the tab label
+     * @param label_text Text to display in the tab label
+     */
     void add_tab(const std::string& id, Gtk::Widget* widget, const std::string& icon_name, const std::string& label_text) {
-        // Create tab label with icon
+        // Create tab label with icon and text
         auto box = create_tab_label(icon_name, label_text);
 
         // Add the tab
@@ -153,8 +193,16 @@ private:
         });
     }
 
+    /**
+     * @brief Handler for tab switch events
+     * @param page Widget of the page being switched to
+     * @param page_num Index of the page being switched to
+     *
+     * Implements lazy loading by detecting when a tab is selected
+     * and loading its content if it hasn't been loaded yet.
+     */
     void on_tab_switch(Gtk::Widget* page, guint page_num) {
-        // Prevent recursive calls during tab loading
+        // Guard against recursive calls that can happen during tab loading
         static bool loading = false;
         if (loading) {
             return;
@@ -195,7 +243,7 @@ private:
             loading = true;
 
             // Use a single-shot timer to delay loading slightly
-            // This helps avoid GTK+ issues during tab switching
+            // This prevents UI freezes and GTK+ rendering issues during tab switching
             Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]() {
                 // Show loading indicator and start async loading
                 show_loading_indicator(tab_id_to_load, page_num);
@@ -210,7 +258,10 @@ private:
         }
     }
 
-    // Create a loading indicator widget
+    /**
+     * @brief Create a loading indicator with spinner and text
+     * @return Widget containing the loading indicator
+     */
     Gtk::Widget* create_loading_indicator() {
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 10);
         box->set_halign(Gtk::ALIGN_CENTER);
@@ -230,7 +281,13 @@ private:
         return box;
     }
 
-    // Show loading indicator for a tab
+    /**
+     * @brief Show loading indicator for a tab
+     * @param id ID of the tab being loaded
+     * @param page_num Page number of the tab
+     *
+     * Replaces the tab's placeholder with a loading indicator
+     */
     void show_loading_indicator(const std::string& id, int page_num) {
         std::lock_guard<std::mutex> lock(tab_mutex_);
 
@@ -281,10 +338,10 @@ private:
         }
 
         try {
-            // Create a new tab label with icon
+            // Create a new tab label with icon and text
             auto box = create_tab_label(icon_name, label_text);
 
-            // Replace the placeholder with the loading indicator
+            // Replace the tab placeholder with the loading indicator
             notebook_.remove_page(page_num);
 
             // Insert the loading indicator
@@ -297,7 +354,7 @@ private:
             tab_widgets_[id].widget = loading_indicator;
             tab_widgets_[id].page_num = new_page_num;
 
-            // Set the current page
+            // Display the loading indicator
             notebook_.set_current_page(new_page_num);
         } catch (const std::exception& e) {
             std::cerr << "Error showing loading indicator for tab " << id << ": " << e.what() << std::endl;
@@ -308,7 +365,13 @@ private:
         }
     }
 
-    // Load tab content asynchronously
+    /**
+     * @brief Start asynchronous loading of tab content
+     * @param id ID of the tab to load
+     * @param page_num Page number of the tab
+     *
+     * Uses a timeout to keep the UI responsive during loading
+     */
     void load_tab_content_async(const std::string& id, int page_num) {
         // Check if already loaded or loading
         {
@@ -318,8 +381,8 @@ private:
             }
         }
 
-        // Use a timeout to simulate asynchronous loading
-        // This keeps the UI responsive while the tab is "loading"
+        // Schedule content creation with a short delay
+        // This keeps the UI responsive and allows the loading indicator to appear
         Glib::signal_timeout().connect_once([this, id, page_num]() {
             // This runs in the main thread after a short delay
             // Create the actual tab content
@@ -327,7 +390,14 @@ private:
         }, 100); // Short delay to allow UI to update
     }
 
-    // Create tab content in the main thread
+    /**
+     * @brief Create the actual content for a tab
+     * @param id ID of the tab to create content for
+     * @param page_num Page number of the tab
+     *
+     * Creates the appropriate tab widget based on the tab ID
+     * and replaces the loading indicator with it
+     */
     void create_tab_content(const std::string& id, int page_num) {
         // Check if already loaded
         {
@@ -362,8 +432,8 @@ private:
             } else if (id == "settings") {
                 auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
                 settings_tab->set_settings_changed_callback([this]() {
-                    // This callback is no longer needed as the app restarts
-                    // but we keep it for compatibility
+                    // This callback is kept for compatibility
+                    // The app now restarts when settings change instead of updating in-place
                     std::cout << "Settings changed, restart required" << std::endl;
                 });
                 content = settings_tab;
@@ -384,10 +454,10 @@ private:
                 current_page_num = tab_widgets_[id].page_num;
             }
 
-            // Create a new tab label with icon
+            // Create a new tab label with icon and text
             auto box = create_tab_label(icon_name, label_text);
 
-            // Replace the loading indicator with the actual content
+            // Replace the loading indicator with the actual tab content
             notebook_.remove_page(current_page_num);
 
             // Insert the new content
@@ -405,7 +475,7 @@ private:
                 tab_widgets_[id].loading = false;
             }
 
-            // Set the current page
+            // Switch to the newly created tab
             notebook_.set_current_page(new_page_num);
 
             // Notify that the tab has been loaded
@@ -424,16 +494,16 @@ private:
         }
     }
 
-    // Called when a tab has finished loading
+    /**
+     * @brief Called when a tab has finished loading
+     * @param id ID of the tab that was loaded
+     *
+     * Called via the dispatcher when a tab is fully loaded.
+     * Can be used for post-loading operations.
+     */
     void on_tab_loaded(const std::string& id) {
-        // This method is called via the dispatcher when a tab is fully loaded
-        // We can use it for any post-loading operations
         std::cout << "Tab " << id << " loaded successfully" << std::endl;
     }
-
-
-
-
 
 private:
     Gtk::Box vbox_;
@@ -443,28 +513,34 @@ private:
     bool prevent_auto_loading_ = false;
     bool minimal_mode_ = false;
 
-    // Structure to track tab widgets and loading state
+    // Tracks tab widgets and their loading state
     struct TabInfo {
         Gtk::Widget* widget;
         int page_num;
         bool loaded;
-        bool loading;  // Flag to indicate if the tab is currently being loaded
+        bool loading;  // Indicates if the tab is currently being loaded
     };
     std::map<std::string, TabInfo> tab_widgets_;
 
-    // Asynchronous loading components
+    // Components for asynchronous tab loading
     std::mutex tab_mutex_;
     std::map<std::string, Glib::Dispatcher> tab_loaded_dispatchers_;
     std::map<std::string, std::string> tab_load_errors_;
 
 };
 
+/**
+ * @brief Application entry point
+ * @param argc Number of command-line arguments
+ * @param argv Array of command-line arguments
+ * @return Application exit code
+ */
 int main(int argc, char* argv[]) {
-    // Define our command-line options
+    // Set up command-line option parsing
     Glib::OptionContext context;
     Glib::OptionGroup group("options", "Application Options", "Application options");
 
-    // Variables to store option values
+    // Variables to store command-line option values
     bool volume_opt = false;
     bool wifi_opt = false;
     bool display_opt = false;
@@ -472,7 +548,7 @@ int main(int argc, char* argv[]) {
     bool settings_opt = false;
     bool minimal_opt = false;
 
-    // Define the command-line entries
+    // Define the command-line option entries
     Glib::OptionEntry volume_entry;
     volume_entry.set_long_name("volume");
     volume_entry.set_short_name('v');
@@ -509,7 +585,7 @@ int main(int argc, char* argv[]) {
     minimal_entry.set_description("Start in minimal mode with notebook tabs hidden");
     group.add_entry(minimal_entry, minimal_opt);
 
-    // Add the option group to the context
+    // Add the option group to the parsing context
     context.set_main_group(group);
 
     try {
@@ -519,7 +595,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Determine which tab to show initially
+    // Determine which tab to show initially based on command-line options
     std::string initial_tab;
     if (volume_opt) {
         initial_tab = "volume";
@@ -533,7 +609,7 @@ int main(int argc, char* argv[]) {
         initial_tab = "settings";
     }
 
-    // Initialize GTK application
+    // Initialize GTK application with unique identifier
     auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
 
     // Create the main window with the initial tab and minimal mode setting
