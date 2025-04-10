@@ -55,18 +55,8 @@ public:
 
                     // Store the signal strength
                     net.signal_strength = signal;
-
-                    // Print the raw tokens for debugging
-                    std::cout << "Network: " << net.ssid << ", Raw tokens: ";
-                    for (size_t i = 0; i < tokens.size(); ++i) {
-                        std::cout << "[" << i << "]=" << tokens[i] << " ";
-                    }
-                    std::cout << std::endl;
-
-                    std::cout << "Network: " << net.ssid << ", Signal strength: " << net.signal_strength << "%" << std::endl;
                 } catch (...) {
                     net.signal_strength = 0;
-                    std::cout << "Failed to parse signal strength for network: " << net.ssid << std::endl;
                 }
                 net.secured = (tokens[3] != "--" && !tokens[3].empty());
                 networks_.push_back(net);

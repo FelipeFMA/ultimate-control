@@ -16,8 +16,6 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
   connect_button_(),
   forget_button_()
 {
-  // Debug: Print the signal strength in the constructor
-  std::cout << "WifiNetworkWidget constructor for " << network.ssid << ", signal strength: " << network.signal_strength << "%" << std::endl;
     // Set up the main container
     set_margin_start(10);
     set_margin_end(10);
@@ -100,7 +98,6 @@ WifiNetworkWidget::~WifiNetworkWidget() = default;
 std::string WifiNetworkWidget::convert_signal_to_quality(int signal_strength) {
     // Simply return the signal strength as a percentage
     // This is the raw value from nmcli which is already a percentage
-    std::cout << "Signal strength for " << network_.ssid << ": " << signal_strength << "%" << std::endl;
     return std::to_string(signal_strength) + "%";
 }
 
