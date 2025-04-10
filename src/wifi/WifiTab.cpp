@@ -117,10 +117,10 @@ WifiTab::WifiTab()
     update_wifi_state(manager_->is_wifi_enabled());
 
     // Show a loading message initially instead of scanning immediately
-    Gtk::Label* loading_label = Gtk::manage(new Gtk::Label("Loading networks..."));
-    loading_label->set_margin_top(20);
-    loading_label->set_margin_bottom(20);
-    container_.pack_start(*loading_label, Gtk::PACK_SHRINK);
+    loading_label_ = Gtk::manage(new Gtk::Label("Loading networks..."));
+    loading_label_->set_margin_top(20);
+    loading_label_->set_margin_bottom(20);
+    container_.pack_start(*loading_label_, Gtk::PACK_SHRINK);
 
     show_all_children();
     std::cout << "WiFi tab loaded!" << std::endl;
@@ -188,10 +188,17 @@ void WifiTab::on_wifi_switch_toggled() {
  * for each network in the provided vector.
  */
 void WifiTab::update_network_list(const std::vector<Network>& networks) {
+    // Remove all existing network widgets
     for (auto& widget : widgets_) {
         container_.remove(*widget);
     }
     widgets_.clear();
+
+    // Remove the loading label if it exists
+    if (loading_label_ != nullptr) {
+        container_.remove(*loading_label_);
+        loading_label_ = nullptr;
+    }
 
     // If WiFi is enabled but no networks were found, show a message
     if (networks.empty() && manager_->is_wifi_enabled()) {

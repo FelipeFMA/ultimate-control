@@ -83,6 +83,7 @@ private:
     Gtk::Image wifi_status_icon_;           ///< Icon showing WiFi status
     std::vector<std::unique_ptr<WifiNetworkWidget>> widgets_;  ///< List of network widgets
     bool initial_scan_performed_ = false;   ///< Flag to track if initial scan has been done
+    Gtk::Label* loading_label_ = nullptr;   ///< Loading message shown before networks are loaded
 };
 
 } // namespace Wifi
