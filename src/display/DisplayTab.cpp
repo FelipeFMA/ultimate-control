@@ -156,17 +156,8 @@ void DisplayTab::on_bluelight_changed() {
 }
 
 void DisplayTab::update_brightness_icon(int value) {
-    std::string icon_name;
-
-    if (value < 30) {
-        icon_name = "display-brightness-symbolic";
-    } else if (value < 70) {
-        icon_name = "display-brightness-symbolic";
-    } else {
-        icon_name = "display-brightness-symbolic";
-    }
-
-    brightness_icon_.set_from_icon_name(icon_name, Gtk::ICON_SIZE_DIALOG);
+    // Always use the same icon regardless of value
+    brightness_icon_.set_from_icon_name("display-brightness-symbolic", Gtk::ICON_SIZE_DIALOG);
 
     // Update the brightness value label
     std::stringstream ss;
@@ -175,17 +166,8 @@ void DisplayTab::update_brightness_icon(int value) {
 }
 
 void DisplayTab::update_bluelight_icon(int value) {
-    std::string icon_name;
-
-    if (value < 3000) {
-        icon_name = "night-light-symbolic";
-    } else if (value < 5000) {
-        icon_name = "night-light-symbolic";
-    } else {
-        icon_name = "night-light-symbolic";
-    }
-
-    bluelight_icon_.set_from_icon_name(icon_name, Gtk::ICON_SIZE_DIALOG);
+    // Always use the same icon regardless of value
+    bluelight_icon_.set_from_icon_name("night-light-symbolic", Gtk::ICON_SIZE_DIALOG);
 
     // Update the bluelight value label
     std::stringstream ss;

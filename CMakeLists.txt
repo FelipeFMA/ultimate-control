@@ -28,9 +28,7 @@ file(GLOB_RECURSE SOURCES
     src/wifi/*.cpp
     src/volume/*.cpp
     src/power/*.cpp
-    src/battery/*.cpp
     src/display/*.cpp
-    src/autostart/*.cpp
 )
 
 add_executable(ultimate-control ${SOURCES})

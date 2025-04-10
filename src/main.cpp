@@ -366,7 +366,7 @@ private:
                 settings_tab->set_settings_changed_callback([this]() {
                     // This callback is no longer needed as the app restarts
                     // but we keep it for compatibility
-                    reload_tabs();
+                    std::cout << "Settings changed, restart required" << std::endl;
                 });
                 content = settings_tab;
                 icon_name = "preferences-system-symbolic";
@@ -433,115 +433,9 @@ private:
         std::cout << "Tab " << id << " loaded successfully" << std::endl;
     }
 
-    // Legacy synchronous loading method (kept for reference)
-    void load_tab_content(const std::string& id, int page_num) {
-        // This method is kept for reference but is no longer used directly
-        // We now use load_tab_content_async instead
 
-        // Check if already loaded
-        if (tab_widgets_[id].loaded) {
-            return;
-        }
 
-        // Make sure the tab exists in the notebook
-        if (tab_widgets_.find(id) == tab_widgets_.end()) {
-            return;
-        }
 
-        // Make sure the page number is valid
-        if (page_num < 0 || page_num >= notebook_.get_n_pages()) {
-            return;
-        }
-
-        // Mark as loaded before creating to prevent recursive loading
-        tab_widgets_[id].loaded = true;
-
-        // Create the actual tab content
-        Gtk::Widget* content = nullptr;
-        std::string icon_name;
-        std::string label_text;
-
-        if (id == "volume") {
-            content = Gtk::make_managed<Volume::VolumeTab>();
-            icon_name = "audio-volume-high-symbolic";
-            label_text = "Volume";
-        } else if (id == "wifi") {
-            content = Gtk::make_managed<Wifi::WifiTab>();
-            icon_name = "network-wireless-symbolic";
-            label_text = "WiFi";
-        } else if (id == "display") {
-            content = Gtk::make_managed<Display::DisplayTab>();
-            icon_name = "video-display-symbolic";
-            label_text = "Display";
-        } else if (id == "power") {
-            content = Gtk::make_managed<Power::PowerTab>();
-            icon_name = "system-shutdown-symbolic";
-            label_text = "Power";
-        } else if (id == "settings") {
-            auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
-            settings_tab->set_settings_changed_callback([this]() {
-                // This callback is no longer needed as the app restarts
-                // but we keep it for compatibility
-                reload_tabs();
-            });
-            content = settings_tab;
-            icon_name = "preferences-system-symbolic";
-            label_text = "Settings";
-        } else {
-            // Unknown tab, reset loaded flag
-            tab_widgets_[id].loaded = false;
-            return;
-        }
-
-        try {
-            // Create a new tab label with icon
-            auto box = create_tab_label(icon_name, label_text);
-
-            // Replace the placeholder with the actual content
-            notebook_.remove_page(page_num);
-
-            // Insert the new content
-            int new_page_num = notebook_.insert_page(*content, *box, page_num);
-
-            // Show the new content
-            content->show_all();
-
-            // Update the tab info
-            tab_widgets_[id].widget = content;
-            tab_widgets_[id].page_num = new_page_num;
-
-            // Set the current page
-            notebook_.set_current_page(new_page_num);
-        } catch (const std::exception& e) {
-            std::cerr << "Error loading tab " << id << ": " << e.what() << std::endl;
-            tab_widgets_[id].loaded = false;
-        } catch (...) {
-            std::cerr << "Unknown error loading tab " << id << std::endl;
-            tab_widgets_[id].loaded = false;
-        }
-    }
-
-    void reload_tabs() {
-        // This method is kept for compatibility but is no longer used
-        // Tab changes now cause the application to restart instead
-        std::cout << "reload_tabs() called, but application restart is used instead" << std::endl;
-
-        // Reload settings from file
-        tab_settings_->load();
-
-        // Recreate tabs
-        create_tabs();
-
-        // Re-add the settings tab
-        auto settings_placeholder = Gtk::make_managed<Gtk::Box>();
-        settings_placeholder->set_size_request(100, 100);
-        add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
-
-        // Switch to the settings tab
-        if (tab_widgets_.find("settings") != tab_widgets_.end()) {
-            notebook_.set_current_page(tab_widgets_["settings"].page_num);
-        }
-    }
 
 private:
     Gtk::Box vbox_;
