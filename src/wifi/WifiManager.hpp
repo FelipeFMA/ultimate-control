@@ -26,7 +26,7 @@ public:
     ~WifiManager();
 
     void scan_networks();
-    void connect(const std::string& ssid, const std::string& password);
+    void connect(const std::string& ssid, const std::string& password, const std::string& security_type = "wpa-psk");
     void disconnect();
     void forget_network(const std::string& ssid);
     void enable_wifi();

@@ -200,7 +200,9 @@ void WifiNetworkWidget::on_connect_clicked() {
                 return;
             }
         }
-        manager_->connect(network_.ssid, password);
+        // Use wpa-psk for secured networks, or empty for open networks
+        std::string security_type = network_.secured ? "wpa-psk" : "";
+        manager_->connect(network_.ssid, password, security_type);
     }
 }
 

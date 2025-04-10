@@ -5,6 +5,7 @@
 #include <memory>
 #include <array>
 #include <algorithm>
+#include <ctime>
 
 namespace Wifi {
 
@@ -68,21 +69,101 @@ public:
         }
     }
 
-    void connect(const std::string& ssid, const std::string& password) {
-        std::string cmd = "nmcli dev wifi connect \"" + ssid + "\" password \"" + password + "\"";
-        std::system(cmd.c_str());
+    void connect(const std::string& ssid, const std::string& password, const std::string& security_type) {
+        // Check if we're already connected to this network
+        bool already_connected = false;
+        for (const auto& net : networks_) {
+            if (net.ssid == ssid && net.connected) {
+                already_connected = true;
+                break;
+            }
+        }
+
+        if (already_connected) {
+            std::cout << "Already connected to " << ssid << std::endl;
+            return;
+        }
+
+        std::cout << "Connecting to WiFi network: " << ssid << "..." << std::endl;
+
+        // For secured networks, directly create a proper connection profile
+        if (!password.empty() && !security_type.empty()) {
+            // Get the WiFi interface name
+            std::string wifi_interface = get_wifi_interface();
+            if (wifi_interface.empty()) {
+                std::cerr << "Error: No WiFi interface found" << std::endl;
+                return;
+            }
+
+            // Create a connection name based on SSID
+            std::string conn_name = ssid;
+
+            // First, delete any existing connection with the same name to avoid conflicts
+            std::string delete_cmd = "nmcli con delete \"" + conn_name + "\" 2>/dev/null || true";
+            std::system(delete_cmd.c_str());
+
+            // Create a connection profile with the correct security settings
+            std::string create_cmd = "nmcli con add type wifi con-name \"" + conn_name + "\" ifname " + wifi_interface +
+                                    " ssid \"" + ssid + "\" && " +
+                                    "nmcli con modify \"" + conn_name + "\" wifi-sec.key-mgmt " + security_type + " && " +
+                                    "nmcli con modify \"" + conn_name + "\" wifi-sec.psk \"" + password + "\" && " +
+                                    "nmcli con up \"" + conn_name + "\"";
+
+            int result = std::system(create_cmd.c_str());
+
+            if (result == 0) {
+                std::cout << "Successfully connected to " << ssid << std::endl;
+            } else {
+                std::cerr << "Failed to connect to " << ssid << std::endl;
+            }
+        } else {
+            // For open networks, use the simple approach
+            std::string cmd = "nmcli dev wifi connect \"" + ssid + "\"";
+            if (!password.empty()) {
+                cmd += " password \"" + password + "\"";
+            }
+
+            int result = std::system(cmd.c_str());
+
+            if (result == 0) {
+                std::cout << "Successfully connected to " << ssid << std::endl;
+            } else {
+                std::cerr << "Failed to connect to " << ssid << std::endl;
+            }
+        }
+
         scan_networks();
     }
 
     void disconnect() {
-        std::string cmd = "nmcli networking off && nmcli networking on";
+        // Get the current active connection
+        std::string wifi_interface = get_wifi_interface();
+        if (wifi_interface.empty()) {
+            std::cerr << "Error: No WiFi interface found" << std::endl;
+            return;
+        }
+
+        // Disconnect the current WiFi connection
+        std::string cmd = "nmcli device disconnect " + wifi_interface;
+        std::cout << "Disconnecting from WiFi..." << std::endl;
         std::system(cmd.c_str());
+
+        // Scan networks after disconnecting
         scan_networks();
     }
 
     void forget_network(const std::string& ssid) {
-        std::string cmd = "nmcli connection delete \"" + ssid + "\"";
-        std::system(cmd.c_str());
+        std::cout << "Forgetting network: " << ssid << std::endl;
+
+        // Delete the connection with the same name as the SSID
+        std::string delete_cmd = "nmcli connection delete \"" + ssid + "\" 2>/dev/null || true";
+        std::system(delete_cmd.c_str());
+
+        // Also clean up any temp connections that might have been created
+        std::string cleanup_cmd = "nmcli -t -f NAME connection show | grep \"temp-conn-\" | xargs -r -n1 nmcli connection delete 2>/dev/null || true";
+        std::system(cleanup_cmd.c_str());
+
+        std::cout << "Network forgotten: " << ssid << std::endl;
         scan_networks();
     }
 
@@ -152,6 +233,25 @@ private:
     WifiManager::StateCallback state_callback_;
     bool wifi_enabled_;
 
+    std::string get_wifi_interface() {
+        std::string cmd = "nmcli device status | grep wifi | grep -v p2p | awk '{print $1}'";
+        std::array<char, 128> buffer;
+        std::string result;
+
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) return "";
+        if (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+            result = buffer.data();
+        }
+        pclose(pipe);
+
+        // Trim whitespace
+        result.erase(0, result.find_first_not_of(" \t\n\r"));
+        result.erase(result.find_last_not_of(" \t\n\r") + 1);
+
+        return result;
+    }
+
     static std::vector<std::string> split(const std::string& s, char delimiter) {
         std::vector<std::string> tokens;
         std::string token;
@@ -176,8 +276,8 @@ void WifiManager::scan_networks() {
     impl_->scan_networks();
 }
 
-void WifiManager::connect(const std::string& ssid, const std::string& password) {
-    impl_->connect(ssid, password);
+void WifiManager::connect(const std::string& ssid, const std::string& password, const std::string& security_type) {
+    impl_->connect(ssid, password, security_type);
 }
 
 void WifiManager::disconnect() {
