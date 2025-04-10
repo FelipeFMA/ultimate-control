@@ -5,17 +5,10 @@
 <h1 align="center">Ultimate Control</h1>
 
 <p align="center">
-  <strong>A comprehensive system control center for Linux</strong>
+  <strong>A GTK control panel for linux written in C++ </strong>
 </p>
-
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#screenshots">Screenshots</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#command-line-options">Command-line Options</a> •
-  <a href="#development">Development</a> •
-  <a href="#license">License</a>
+Inspired by better-control.
 </p>
 
 ---
