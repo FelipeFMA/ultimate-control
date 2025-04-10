@@ -39,13 +39,28 @@ public:
      * @brief Constructor for MainWindow
      * @param initial_tab Tab ID to select on startup (empty for default)
      * @param minimal_mode Whether to hide the tab bar
+better_control.py     * @param floating_mode Whether to make the window float on tiling window managers
      */
-    MainWindow(const std::string& initial_tab = "", bool minimal_mode = false) {
+    MainWindow(const std::string& initial_tab = "", bool minimal_mode = false, bool floating_mode = false) {
         initial_tab_ = initial_tab;
         minimal_mode_ = minimal_mode;
         prevent_auto_loading_ = !initial_tab_.empty();
         set_title("Ultimate Control");
         set_default_size(800, 600);
+
+        // Set window type hint to DIALOG if floating mode is enabled
+        // This makes the window float on tiling window managers
+        if (floating_mode) {
+            set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+
+            // Check if running under Hyprland
+            const char* hyprland_signature = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+            if (hyprland_signature != nullptr) {
+                // We're running under Hyprland, run the specific command to ensure floating
+                std::string cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
+                std::system(cmd.c_str());
+            }
+        }
 
         vbox_.set_orientation(Gtk::ORIENTATION_VERTICAL);
         add(vbox_);
@@ -547,6 +562,7 @@ int main(int argc, char* argv[]) {
     bool power_opt = false;
     bool settings_opt = false;
     bool minimal_opt = false;
+    bool floating_opt = false;
 
     // Define the command-line option entries
     Glib::OptionEntry volume_entry;
@@ -585,6 +601,12 @@ int main(int argc, char* argv[]) {
     minimal_entry.set_description("Start in minimal mode with notebook tabs hidden");
     group.add_entry(minimal_entry, minimal_opt);
 
+    Glib::OptionEntry floating_entry;
+    floating_entry.set_long_name("float");
+    floating_entry.set_short_name('f');
+    floating_entry.set_description("Start as a floating window on tiling window managers");
+    group.add_entry(floating_entry, floating_opt);
+
     // Add the option group to the parsing context
     context.set_main_group(group);
 
@@ -612,8 +634,8 @@ int main(int argc, char* argv[]) {
     // Initialize GTK application with unique identifier
     auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
 
-    // Create the main window with the initial tab and minimal mode setting
-    MainWindow window(initial_tab, minimal_opt);
+    // Create the main window with the initial tab, minimal mode, and floating mode settings
+    MainWindow window(initial_tab, minimal_opt, floating_opt);
 
     // Run the application
     return app->run(window);

@@ -125,6 +125,7 @@ Options:
   -p, --power     Start with the Power tab selected
   -s, --settings  Start with the Settings tab selected
   -m, --minimal   Start in minimal mode with notebook tabs hidden
+  -f, --float     Start as a floating window on tiling window managers
 ```
 
 ### Examples
@@ -135,6 +136,15 @@ ultimate-control --wifi
 
 # Start with Power tab in minimal mode
 ultimate-control -p -m
+
+# Start as a floating window (useful for tiling window managers)
+ultimate-control --float
+
+# On Hyprland, this will automatically run:
+# hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'
+
+# Combine options: WiFi tab, minimal mode, and floating window
+ultimate-control -w -m -f
 ```
 
 ## 🛠️ Development
