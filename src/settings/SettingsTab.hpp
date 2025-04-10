@@ -6,8 +6,7 @@
  * for configuring application settings, including tab visibility and order.
  */
 
-#ifndef ULTIMATE_CONTROL_SETTINGS_TAB_HPP
-#define ULTIMATE_CONTROL_SETTINGS_TAB_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "TabSettings.hpp"
@@ -150,4 +149,3 @@ private:
 
 } // namespace Settings
 
-#endif // ULTIMATE_CONTROL_SETTINGS_TAB_HPP

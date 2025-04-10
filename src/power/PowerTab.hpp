@@ -7,8 +7,7 @@
  * as well as power profile management.
  */
 
-#ifndef ULTIMATE_CONTROL_POWER_TAB_HPP
-#define ULTIMATE_CONTROL_POWER_TAB_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "PowerManager.hpp"
@@ -120,4 +119,3 @@ private:
 
 } // namespace Power
 
-#endif // ULTIMATE_CONTROL_POWER_TAB_HPP

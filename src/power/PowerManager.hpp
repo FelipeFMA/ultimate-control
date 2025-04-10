@@ -7,8 +7,7 @@
  * as well as power profile management.
  */
 
-#ifndef ULTIMATE_CONTROL_POWER_MANAGER_HPP
-#define ULTIMATE_CONTROL_POWER_MANAGER_HPP
+#pragma once
 
 #include <functional>
 #include <string>
@@ -134,4 +133,3 @@ private:
 
 } // namespace Power
 
-#endif // ULTIMATE_CONTROL_POWER_MANAGER_HPP

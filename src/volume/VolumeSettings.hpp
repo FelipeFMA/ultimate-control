@@ -6,8 +6,7 @@
  * for loading, saving, and accessing volume-related settings.
  */
 
-#ifndef ULTIMATE_CONTROL_VOLUME_SETTINGS_HPP
-#define ULTIMATE_CONTROL_VOLUME_SETTINGS_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -76,4 +75,3 @@ private:
 
 } // namespace Volume
 
-#endif // ULTIMATE_CONTROL_VOLUME_SETTINGS_HPP

@@ -6,8 +6,7 @@
  * for adjusting screen brightness and color temperature.
  */
 
-#ifndef ULTIMATE_CONTROL_DISPLAY_TAB_HPP
-#define ULTIMATE_CONTROL_DISPLAY_TAB_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "DisplayManager.hpp"
@@ -108,4 +107,3 @@ private:
 
 } // namespace Display
 
-#endif // ULTIMATE_CONTROL_DISPLAY_TAB_HPP

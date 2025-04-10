@@ -7,8 +7,7 @@
  * input and output devices.
  */
 
-#ifndef ULTIMATE_CONTROL_VOLUME_TAB_HPP
-#define ULTIMATE_CONTROL_VOLUME_TAB_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "VolumeManager.hpp"
@@ -64,4 +63,3 @@ private:
 
 } // namespace Volume
 
-#endif // ULTIMATE_CONTROL_VOLUME_TAB_HPP

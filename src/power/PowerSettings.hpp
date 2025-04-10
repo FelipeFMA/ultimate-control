@@ -7,8 +7,7 @@
  * commands for shutdown, reboot, suspend, etc.
  */
 
-#ifndef ULTIMATE_CONTROL_POWER_SETTINGS_HPP
-#define ULTIMATE_CONTROL_POWER_SETTINGS_HPP
+#pragma once
 
 #include <string>
 #include <map>
@@ -94,4 +93,3 @@ private:
 
 } // namespace Power
 
-#endif // ULTIMATE_CONTROL_POWER_SETTINGS_HPP

@@ -6,8 +6,7 @@
  * for getting and setting display brightness using the brightnessctl utility.
  */
 
-#ifndef ULTIMATE_CONTROL_DISPLAY_MANAGER_HPP
-#define ULTIMATE_CONTROL_DISPLAY_MANAGER_HPP
+#pragma once
 
 #include <functional>
 
@@ -87,4 +86,3 @@ private:
 
 } // namespace Display
 
-#endif // ULTIMATE_CONTROL_DISPLAY_MANAGER_HPP

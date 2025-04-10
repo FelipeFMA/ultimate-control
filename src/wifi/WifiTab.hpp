@@ -7,8 +7,7 @@
  * a list of available networks and allows the user to enable/disable WiFi.
  */
 
-#ifndef ULTIMATE_CONTROL_WIFI_TAB_HPP
-#define ULTIMATE_CONTROL_WIFI_TAB_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "WifiManager.hpp"
@@ -88,4 +87,3 @@ private:
 
 } // namespace Wifi
 
-#endif // ULTIMATE_CONTROL_WIFI_TAB_HPP

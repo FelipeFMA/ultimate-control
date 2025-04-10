@@ -6,8 +6,7 @@
  * audio device with volume slider and mute button controls.
  */
 
-#ifndef ULTIMATE_CONTROL_VOLUME_WIDGET_HPP
-#define ULTIMATE_CONTROL_VOLUME_WIDGET_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "VolumeManager.hpp"
@@ -80,4 +79,3 @@ private:
 
 } // namespace Volume
 
-#endif // ULTIMATE_CONTROL_VOLUME_WIDGET_HPP

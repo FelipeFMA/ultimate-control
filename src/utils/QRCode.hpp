@@ -7,8 +7,7 @@
  * special formats like WiFi network information QR codes.
  */
 
-#ifndef ULTIMATE_CONTROL_QRCODE_HPP
-#define ULTIMATE_CONTROL_QRCODE_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -169,4 +168,3 @@ private:
 
 } // namespace Utils
 
-#endif // ULTIMATE_CONTROL_QRCODE_HPP

@@ -8,8 +8,7 @@
  * saved networks, and sharing networks via QR codes.
  */
 
-#ifndef ULTIMATE_CONTROL_WIFI_NETWORK_WIDGET_HPP
-#define ULTIMATE_CONTROL_WIFI_NETWORK_WIDGET_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "WifiManager.hpp"
@@ -118,4 +117,3 @@ private:
 
 } // namespace Wifi
 
-#endif // ULTIMATE_CONTROL_WIFI_NETWORK_WIDGET_HPP

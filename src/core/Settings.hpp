@@ -7,8 +7,7 @@
  * and language preferences.
  */
 
-#ifndef ULTIMATE_CONTROL_SETTINGS_HPP
-#define ULTIMATE_CONTROL_SETTINGS_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include <memory>
@@ -70,4 +69,3 @@ private:
 
 } // namespace Core
 
-#endif // ULTIMATE_CONTROL_SETTINGS_HPP

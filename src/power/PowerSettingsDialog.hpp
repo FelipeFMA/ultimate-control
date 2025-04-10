@@ -7,8 +7,7 @@
  * reboot, suspend, etc.
  */
 
-#ifndef ULTIMATE_CONTROL_POWER_SETTINGS_DIALOG_HPP
-#define ULTIMATE_CONTROL_POWER_SETTINGS_DIALOG_HPP
+#pragma once
 
 #include <gtkmm.h>
 #include "PowerSettings.hpp"
@@ -86,4 +85,3 @@ private:
 
 } // namespace Power
 
-#endif // ULTIMATE_CONTROL_POWER_SETTINGS_DIALOG_HPP

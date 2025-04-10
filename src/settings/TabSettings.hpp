@@ -7,8 +7,7 @@
  * Settings are persisted to a configuration file.
  */
 
-#ifndef ULTIMATE_CONTROL_TAB_SETTINGS_HPP
-#define ULTIMATE_CONTROL_TAB_SETTINGS_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -157,4 +156,3 @@ private:
 
 } // namespace Settings
 
-#endif // ULTIMATE_CONTROL_TAB_SETTINGS_HPP

@@ -7,8 +7,7 @@
  * It uses the PIMPL idiom to hide implementation details.
  */
 
-#ifndef ULTIMATE_CONTROL_WIFI_MANAGER_HPP
-#define ULTIMATE_CONTROL_WIFI_MANAGER_HPP
+#pragma once
 
 #include <string>
 #include <vector>
@@ -144,4 +143,3 @@ private:
 
 } // namespace Wifi
 
-#endif // ULTIMATE_CONTROL_WIFI_MANAGER_HPP

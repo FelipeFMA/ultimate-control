@@ -7,8 +7,7 @@
  * It uses the PIMPL idiom to hide implementation details.
  */
 
-#ifndef ULTIMATE_CONTROL_VOLUME_MANAGER_HPP
-#define ULTIMATE_CONTROL_VOLUME_MANAGER_HPP
+#pragma once
 
 #include <memory>
 #include <string>
@@ -98,4 +97,3 @@ private:
 
 } // namespace Volume
 
-#endif // ULTIMATE_CONTROL_VOLUME_MANAGER_HPP
