@@ -25,13 +25,13 @@ namespace Settings {
  */
 SettingsTab::SettingsTab()
 : settings_(std::make_shared<TabSettings>()),           // Create settings manager
-  main_box_(Gtk::ORIENTATION_VERTICAL, 20),             // Main container with 20px spacing
-  general_settings_box_(Gtk::ORIENTATION_VERTICAL, 15),  // General settings section with 15px spacing
-  general_header_box_(Gtk::ORIENTATION_HORIZONTAL, 15),  // General header with 15px spacing
-  tab_order_box_(Gtk::ORIENTATION_VERTICAL, 15),        // Tab order section with 15px spacing
-  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 15), // Tab order header with 15px spacing
-  tab_list_box_(Gtk::ORIENTATION_VERTICAL, 10),          // Tab list with 10px spacing
-  buttons_box_(Gtk::ORIENTATION_HORIZONTAL, 15)         // Buttons container with 15px spacing
+  main_box_(Gtk::ORIENTATION_VERTICAL, 10),             // Main container with 10px spacing
+  general_settings_box_(Gtk::ORIENTATION_VERTICAL, 8),  // General settings section with 8px spacing
+  general_header_box_(Gtk::ORIENTATION_HORIZONTAL, 8),  // General header with 8px spacing
+  tab_order_box_(Gtk::ORIENTATION_VERTICAL, 8),        // Tab order section with 8px spacing
+  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 8), // Tab order header with 8px spacing
+  tab_list_box_(Gtk::ORIENTATION_VERTICAL, 5),          // Tab list with 5px spacing
+  buttons_box_(Gtk::ORIENTATION_HORIZONTAL, 10)         // Buttons container with 10px spacing
 {
     // Set up the main container orientation
     set_orientation(Gtk::ORIENTATION_VERTICAL);
@@ -41,10 +41,10 @@ SettingsTab::SettingsTab()
     pack_start(scrolled_window_, Gtk::PACK_EXPAND_WIDGET);
 
     // Set up the main box inside the scrolled window with margins
-    main_box_.set_margin_start(20);
-    main_box_.set_margin_end(20);
-    main_box_.set_margin_top(20);
-    main_box_.set_margin_bottom(20);
+    main_box_.set_margin_start(10);
+    main_box_.set_margin_end(10);
+    main_box_.set_margin_top(10);
+    main_box_.set_margin_bottom(10);
     scrolled_window_.add(main_box_);
 
     // Create the general settings section
@@ -84,18 +84,18 @@ SettingsTab::~SettingsTab() = default;
 void SettingsTab::create_general_settings_section() {
     // Configure the frame for the general settings section
     general_settings_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
-    general_settings_frame_.set_margin_bottom(20);
+    general_settings_frame_.set_margin_bottom(10);
 
     // Configure the general settings box with margins (same as tab settings)
     general_settings_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
-    general_settings_box_.set_spacing(15);
-    general_settings_box_.set_margin_start(20);
-    general_settings_box_.set_margin_end(20);
-    general_settings_box_.set_margin_top(20);
-    general_settings_box_.set_margin_bottom(20);
+    general_settings_box_.set_spacing(8);
+    general_settings_box_.set_margin_start(10);
+    general_settings_box_.set_margin_end(10);
+    general_settings_box_.set_margin_top(10);
+    general_settings_box_.set_margin_bottom(10);
 
     // Add settings icon and title label to the header
-    general_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
+    general_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_LARGE_TOOLBAR);
     general_label_.set_markup("<span size='large'><b>General Settings</b></span>");
     general_label_.set_halign(Gtk::ALIGN_START);
     general_label_.set_valign(Gtk::ALIGN_CENTER);
@@ -108,14 +108,14 @@ void SettingsTab::create_general_settings_section() {
     Gtk::Label* description = Gtk::manage(new Gtk::Label());
     description->set_markup("Configure general application settings:");
     description->set_halign(Gtk::ALIGN_START);
-    description->set_margin_bottom(15);
-    description->set_margin_top(5);
+    description->set_margin_bottom(8);
+    description->set_margin_top(3);
 
     // Configure the floating mode checkbox
     floating_check_.set_label("Start in floating mode by default");
-    floating_check_.set_margin_start(15);
-    floating_check_.set_margin_top(5);
-    floating_check_.set_margin_bottom(5);
+    floating_check_.set_margin_start(8);
+    floating_check_.set_margin_top(3);
+    floating_check_.set_margin_bottom(3);
     floating_check_.set_active(Core::get_setting("floating", "0") == "1");
 
     // Add a tooltip with more information
@@ -125,9 +125,9 @@ void SettingsTab::create_general_settings_section() {
     auto floating_note = Gtk::manage(new Gtk::Label());
     floating_note->set_markup("<span size='small' style='italic'>Note: Full support on Hyprland, partial support on other tiling WMs</span>");
     floating_note->set_halign(Gtk::ALIGN_START);
-    floating_note->set_margin_start(35);
-    floating_note->set_margin_top(5);
-    floating_note->set_margin_bottom(15);
+    floating_note->set_margin_start(20);
+    floating_note->set_margin_top(3);
+    floating_note->set_margin_bottom(8);
 
     // Assemble the general settings section components
     general_settings_box_.pack_start(general_header_box_, Gtk::PACK_SHRINK);
@@ -151,18 +151,18 @@ void SettingsTab::create_tab_order_section() {
     // Configure the frame and container for the tab order section
     tab_order_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     tab_order_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
-    tab_order_box_.set_spacing(15);
-    tab_order_box_.set_margin_start(20);
-    tab_order_box_.set_margin_end(20);
-    tab_order_box_.set_margin_top(20);
-    tab_order_box_.set_margin_bottom(20);
+    tab_order_box_.set_spacing(8);
+    tab_order_box_.set_margin_start(10);
+    tab_order_box_.set_margin_end(10);
+    tab_order_box_.set_margin_top(10);
+    tab_order_box_.set_margin_bottom(10);
 
     // Configure the header for the tab order section
     tab_order_header_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
-    tab_order_header_box_.set_spacing(10);
+    tab_order_header_box_.set_spacing(8);
 
     // Add settings icon and title label to the header
-    tab_order_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
+    tab_order_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_LARGE_TOOLBAR);
     tab_order_label_.set_markup("<span size='large'><b>Tab Settings</b></span>");
     tab_order_label_.set_halign(Gtk::ALIGN_START);
     tab_order_label_.set_valign(Gtk::ALIGN_CENTER);
@@ -175,14 +175,14 @@ void SettingsTab::create_tab_order_section() {
     Gtk::Label* description = Gtk::manage(new Gtk::Label());
     description->set_markup("Configure which tabs are visible and their order:");
     description->set_halign(Gtk::ALIGN_START);
-    description->set_margin_bottom(15);
-    description->set_margin_top(5);
+    description->set_margin_bottom(8);
+    description->set_margin_top(3);
 
     // Configure the container for the list of tabs
-    tab_list_box_.set_margin_start(15);
-    tab_list_box_.set_margin_end(15);
-    tab_list_box_.set_margin_top(5);
-    tab_list_box_.set_margin_bottom(5);
+    tab_list_box_.set_margin_start(8);
+    tab_list_box_.set_margin_end(8);
+    tab_list_box_.set_margin_top(3);
+    tab_list_box_.set_margin_bottom(3);
 
     // Assemble the tab order section components
     tab_order_box_.pack_start(tab_order_header_box_, Gtk::PACK_SHRINK);
@@ -220,11 +220,11 @@ void SettingsTab::update_tab_list() {
 
         // Configure the horizontal container for this tab's row
         row->row_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
-        row->row_box.set_spacing(15);
-        row->row_box.set_margin_bottom(8);
-        row->row_box.set_margin_top(8);
-        row->row_box.set_margin_start(5);
-        row->row_box.set_margin_end(5);
+        row->row_box.set_spacing(8);
+        row->row_box.set_margin_bottom(4);
+        row->row_box.set_margin_top(4);
+        row->row_box.set_margin_start(3);
+        row->row_box.set_margin_end(3);
 
         // Create the checkbox for enabling/disabling the tab
         row->enabled_check.set_active(tab.enabled);
