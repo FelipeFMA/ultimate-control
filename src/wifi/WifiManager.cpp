@@ -1,3 +1,12 @@
+/**
+ * @file WifiManager.cpp
+ * @brief Implementation of the WiFi management functionality
+ *
+ * This file implements the WifiManager class which provides an interface
+ * for scanning, connecting to, and managing WiFi networks using NetworkManager.
+ * It uses the PIMPL idiom to hide implementation details.
+ */
+
 #include "WifiManager.hpp"
 #include <iostream>
 #include <cstdlib>
@@ -9,11 +18,30 @@
 
 namespace Wifi {
 
+/**
+ * @class WifiManager::Impl
+ * @brief Private implementation of the WifiManager class
+ *
+ * This class implements the actual WiFi management functionality using
+ * NetworkManager's command-line interface (nmcli).
+ */
 class WifiManager::Impl {
 public:
+    /**
+     * @brief Constructor for the implementation class
+     *
+     * Initializes the WiFi state by checking if WiFi is currently enabled
+     */
     Impl() : wifi_enabled_(check_wifi_enabled()) {}
     ~Impl() = default;
 
+    /**
+     * @brief Scan for available WiFi networks
+     *
+     * Uses nmcli to scan for available networks and populates the networks_ vector.
+     * If WiFi is disabled, clears the networks list instead.
+     * Calls the update callback when finished if one is registered.
+     */
     void scan_networks() {
         if (!wifi_enabled_) {
             networks_.clear();
@@ -51,10 +79,10 @@ public:
                 net.ssid = tokens[1];
                 net.bssid = ""; // We don't have BSSID in this command
                 try {
-                    // Parse the signal strength from nmcli
+                    // Parse the signal strength percentage from nmcli output
                     int signal = std::stoi(tokens[2]);
 
-                    // Store the signal strength
+                    // Store the signal strength in the network object
                     net.signal_strength = signal;
                 } catch (...) {
                     net.signal_strength = 0;
@@ -69,8 +97,18 @@ public:
         }
     }
 
+    /**
+     * @brief Connect to a WiFi network
+     * @param ssid The SSID of the network to connect to
+     * @param password The password for the network (empty for open networks)
+     * @param security_type The security type (e.g., "wpa-psk")
+     *
+     * First tries to connect using saved credentials. If that fails,
+     * creates a new connection profile with the provided credentials.
+     * Rescans networks after attempting to connect.
+     */
     void connect(const std::string& ssid, const std::string& password, const std::string& security_type) {
-        // Check if we're already connected to this network
+        // First check if we're already connected to this network to avoid unnecessary operations
         bool already_connected = false;
         for (const auto& net : networks_) {
             if (net.ssid == ssid && net.connected) {
@@ -86,7 +124,7 @@ public:
 
         std::cout << "Connecting to WiFi network: " << ssid << "..." << std::endl;
 
-        // First, try to connect using an existing saved connection
+        // Try to connect using an existing saved connection profile first
         std::string saved_cmd = "nmcli con up \"" + ssid + "\" 2>/dev/null";
         int saved_result = std::system(saved_cmd.c_str());
 
@@ -96,25 +134,25 @@ public:
             return;
         }
 
-        // If we couldn't connect using a saved connection, proceed with password
+        // If no saved connection exists or connection failed, create a new connection profile
 
-        // For secured networks, directly create a proper connection profile
+        // For secured networks, create a detailed connection profile with security settings
         if (!password.empty() && !security_type.empty()) {
-            // Get the WiFi interface name
+            // Get the WiFi interface name (e.g., wlan0, wlp3s0)
             std::string wifi_interface = get_wifi_interface();
             if (wifi_interface.empty()) {
                 std::cerr << "Error: No WiFi interface found" << std::endl;
                 return;
             }
 
-            // Create a connection name based on SSID
+            // Use the SSID as the connection profile name
             std::string conn_name = ssid;
 
-            // First, delete any existing connection with the same name to avoid conflicts
+            // Delete any existing connection with the same name to avoid conflicts
             std::string delete_cmd = "nmcli con delete \"" + conn_name + "\" 2>/dev/null || true";
             std::system(delete_cmd.c_str());
 
-            // Create a connection profile with the correct security settings
+            // Create a new connection profile with the correct security settings
             std::string create_cmd = "nmcli con add type wifi con-name \"" + conn_name + "\" ifname " + wifi_interface +
                                     " ssid \"" + ssid + "\" && " +
                                     "nmcli con modify \"" + conn_name + "\" wifi-sec.key-mgmt " + security_type + " && " +
@@ -129,7 +167,7 @@ public:
                 std::cerr << "Failed to connect to " << ssid << std::endl;
             }
         } else {
-            // For open networks, use the simple approach
+            // For open networks or when security type isn't specified, use the simpler connection method
             std::string cmd = "nmcli dev wifi connect \"" + ssid + "\"";
             if (!password.empty()) {
                 cmd += " password \"" + password + "\"";
@@ -147,27 +185,41 @@ public:
         scan_networks();
     }
 
+    /**
+     * @brief Disconnect from the current WiFi network
+     *
+     * Disconnects from the currently connected WiFi network using nmcli.
+     * Rescans networks after disconnecting.
+     */
     void disconnect() {
-        // Get the current active connection
+        // Get the WiFi interface to disconnect
         std::string wifi_interface = get_wifi_interface();
         if (wifi_interface.empty()) {
             std::cerr << "Error: No WiFi interface found" << std::endl;
             return;
         }
 
-        // Disconnect the current WiFi connection
+        // Disconnect from the current WiFi network
         std::string cmd = "nmcli device disconnect " + wifi_interface;
         std::cout << "Disconnecting from WiFi..." << std::endl;
         std::system(cmd.c_str());
 
-        // Scan networks after disconnecting
+        // Update network list after disconnecting
         scan_networks();
     }
 
+    /**
+     * @brief Remove saved credentials for a WiFi network
+     * @param ssid The SSID of the network to forget
+     *
+     * Finds and deletes all connection profiles associated with the specified SSID.
+     * Also cleans up any temporary connections that might have been created.
+     * Rescans networks after forgetting.
+     */
     void forget_network(const std::string& ssid) {
         std::cout << "Forgetting network: " << ssid << std::endl;
 
-        // First, get a list of all connections
+        // Get a list of all connection profiles from NetworkManager
         std::string cmd = "nmcli -t -f NAME,UUID,TYPE connection show";
         std::array<char, 4096> buffer;
         std::string result;
@@ -183,7 +235,7 @@ public:
         }
         pclose(pipe);
 
-        // Parse the output to find all WiFi connections
+        // Parse the output to find all WiFi connection profiles
         size_t pos = 0;
         std::vector<std::pair<std::string, std::string>> wifi_connections; // name, uuid pairs
 
@@ -197,11 +249,11 @@ public:
             }
         }
 
-        // Now check each WiFi connection to see if it's for our SSID
+        // Check each WiFi connection profile to see if it matches our target SSID
         bool deleted_any = false;
 
         for (const auto& conn : wifi_connections) {
-            // Get the SSID for this connection
+            // Get the SSID associated with this connection profile
             std::string check_cmd = "nmcli -g 802-11-wireless.ssid connection show " + conn.second + " 2>/dev/null";
             FILE* check_pipe = popen(check_cmd.c_str(), "r");
             if (!check_pipe) continue;
@@ -209,13 +261,13 @@ public:
             std::string conn_ssid;
             if (fgets(buffer.data(), buffer.size(), check_pipe) != nullptr) {
                 conn_ssid = buffer.data();
-                // Trim whitespace
+                // Trim whitespace from the SSID
                 conn_ssid.erase(0, conn_ssid.find_first_not_of(" \t\n\r"));
                 conn_ssid.erase(conn_ssid.find_last_not_of(" \t\n\r") + 1);
             }
             pclose(check_pipe);
 
-            // If this connection is for our SSID, delete it
+            // If this connection profile matches our target SSID, delete it
             if (conn_ssid == ssid) {
                 std::string delete_cmd = "nmcli connection delete " + conn.second;
                 std::cout << "Deleting connection '" << conn.first << "' (UUID: " << conn.second << ") for SSID: " << ssid << std::endl;
@@ -224,13 +276,13 @@ public:
             }
         }
 
-        // If we didn't find any connections for this SSID, try deleting by name as a fallback
+        // If no matching profiles were found, try deleting by connection name as a fallback
         if (!deleted_any) {
             std::string delete_cmd = "nmcli connection delete \"" + ssid + "\" 2>/dev/null || true";
             std::system(delete_cmd.c_str());
         }
 
-        // Also clean up any temp connections that might have been created
+        // Clean up any temporary connections that might have been created by nmcli
         std::string cleanup_cmd = "nmcli -t -f NAME connection show | grep \"temp-conn-\" | xargs -r -n1 nmcli connection delete 2>/dev/null || true";
         std::system(cleanup_cmd.c_str());
 
@@ -238,6 +290,13 @@ public:
         scan_networks();
     }
 
+    /**
+     * @brief Enable the WiFi radio
+     *
+     * Turns on the WiFi radio using nmcli.
+     * Updates the internal state and calls the state callback if registered.
+     * Scans for networks after enabling WiFi.
+     */
     void enable_wifi() {
         std::string cmd = "nmcli radio wifi on";
         int ret = std::system(cmd.c_str());
@@ -246,11 +305,18 @@ public:
             if (state_callback_) {
                 state_callback_(wifi_enabled_);
             }
-            // Scan networks after enabling WiFi
+            // Update network list after enabling WiFi
             scan_networks();
         }
     }
 
+    /**
+     * @brief Disable the WiFi radio
+     *
+     * Turns off the WiFi radio using nmcli.
+     * Updates the internal state and calls the state callback if registered.
+     * Clears the network list after disabling WiFi.
+     */
     void disable_wifi() {
         std::string cmd = "nmcli radio wifi off";
         int ret = std::system(cmd.c_str());
@@ -259,7 +325,7 @@ public:
             if (state_callback_) {
                 state_callback_(wifi_enabled_);
             }
-            // Clear networks after disabling WiFi
+            // Clear network list since WiFi is now disabled
             networks_.clear();
             if (update_callback_) {
                 update_callback_(networks_);
@@ -267,10 +333,20 @@ public:
         }
     }
 
+    /**
+     * @brief Check if WiFi is currently enabled
+     * @return true if WiFi is enabled, false otherwise
+     */
     bool is_wifi_enabled() const {
         return wifi_enabled_;
     }
 
+    /**
+     * @brief Query the system to determine if WiFi is enabled
+     * @return true if WiFi is enabled, false otherwise
+     *
+     * Uses nmcli to check the current state of the WiFi radio.
+     */
     bool check_wifi_enabled() {
         std::string cmd = "nmcli radio wifi";
         std::array<char, 128> buffer;
@@ -283,21 +359,33 @@ public:
         }
         pclose(pipe);
 
-        // Trim whitespace
+        // Trim whitespace from the result
         result.erase(0, result.find_first_not_of(" \t\n\r"));
         result.erase(result.find_last_not_of(" \t\n\r") + 1);
 
         return result == "enabled";
     }
 
+    /**
+     * @brief Set the callback for network list updates
+     * @param cb The callback function to be called when the network list changes
+     */
     void set_update_callback(WifiManager::UpdateCallback cb) {
         update_callback_ = cb;
     }
 
+    /**
+     * @brief Set the callback for WiFi state changes
+     * @param cb The callback function to be called when WiFi is enabled or disabled
+     */
     void set_state_callback(WifiManager::StateCallback cb) {
         state_callback_ = cb;
     }
 
+    /**
+     * @brief Get the current list of WiFi networks
+     * @return A reference to the vector of detected networks
+     */
     const std::vector<Network>& get_networks() const {
         return networks_;
     }
@@ -308,6 +396,12 @@ private:
     WifiManager::StateCallback state_callback_;
     bool wifi_enabled_;
 
+    /**
+     * @brief Get the name of the WiFi interface
+     * @return The name of the WiFi interface (e.g., wlan0)
+     *
+     * Uses nmcli to find the WiFi interface, excluding p2p interfaces.
+     */
     std::string get_wifi_interface() {
         std::string cmd = "nmcli device status | grep wifi | grep -v p2p | awk '{print $1}'";
         std::array<char, 128> buffer;
@@ -320,13 +414,19 @@ private:
         }
         pclose(pipe);
 
-        // Trim whitespace
+        // Trim whitespace from the interface name
         result.erase(0, result.find_first_not_of(" \t\n\r"));
         result.erase(result.find_last_not_of(" \t\n\r") + 1);
 
         return result;
     }
 
+    /**
+     * @brief Split a string by a delimiter character
+     * @param s The string to split
+     * @param delimiter The character to split on
+     * @return A vector of substrings
+     */
     static std::vector<std::string> split(const std::string& s, char delimiter) {
         std::vector<std::string> tokens;
         std::string token;
@@ -343,46 +443,96 @@ private:
     }
 };
 
+/**
+ * @brief Constructor for WifiManager
+ *
+ * Creates the implementation object using the PIMPL idiom.
+ */
 WifiManager::WifiManager() : impl_(std::make_unique<Impl>()) {}
 
+/**
+ * @brief Destructor for WifiManager
+ *
+ * Default implementation is sufficient since impl_ is a unique_ptr.
+ */
 WifiManager::~WifiManager() = default;
 
+/**
+ * @brief Scan for available WiFi networks
+ *
+ * Delegates to the implementation class.
+ */
 void WifiManager::scan_networks() {
     impl_->scan_networks();
 }
 
+/**
+ * @brief Connect to a WiFi network
+ * @param ssid The SSID of the network to connect to
+ * @param password The password for the network (empty for open networks)
+ * @param security_type The security type (defaults to "wpa-psk")
+ */
 void WifiManager::connect(const std::string& ssid, const std::string& password, const std::string& security_type) {
     impl_->connect(ssid, password, security_type);
 }
 
+/**
+ * @brief Disconnect from the current WiFi network
+ */
 void WifiManager::disconnect() {
     impl_->disconnect();
 }
 
+/**
+ * @brief Remove saved credentials for a WiFi network
+ * @param ssid The SSID of the network to forget
+ */
 void WifiManager::forget_network(const std::string& ssid) {
     impl_->forget_network(ssid);
 }
 
+/**
+ * @brief Enable the WiFi radio
+ */
 void WifiManager::enable_wifi() {
     impl_->enable_wifi();
 }
 
+/**
+ * @brief Disable the WiFi radio
+ */
 void WifiManager::disable_wifi() {
     impl_->disable_wifi();
 }
 
+/**
+ * @brief Check if WiFi is currently enabled
+ * @return true if WiFi is enabled, false otherwise
+ */
 bool WifiManager::is_wifi_enabled() const {
     return impl_->is_wifi_enabled();
 }
 
+/**
+ * @brief Set the callback for network list updates
+ * @param cb The callback function to be called when the network list changes
+ */
 void WifiManager::set_update_callback(UpdateCallback cb) {
     impl_->set_update_callback(cb);
 }
 
+/**
+ * @brief Set the callback for WiFi state changes
+ * @param cb The callback function to be called when WiFi is enabled or disabled
+ */
 void WifiManager::set_state_callback(StateCallback cb) {
     impl_->set_state_callback(cb);
 }
 
+/**
+ * @brief Get the current list of WiFi networks
+ * @return A reference to the vector of detected networks
+ */
 const WifiManager::NetworkList& WifiManager::get_networks() const {
     return impl_->get_networks();
 }
