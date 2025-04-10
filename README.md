@@ -142,6 +142,8 @@ ultimate-control --float
 
 # On Hyprland, this will automatically run:
 # hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'
+# When floating mode is disabled, it will run:
+# hyprctl --batch 'keyword windowrulev2 unset,class:^(ultimate-control)$'
 
 # Combine options: WiFi tab, minimal mode, and floating window
 ultimate-control -w -m -f

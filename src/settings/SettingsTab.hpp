@@ -67,6 +67,13 @@ public:
 
 private:
     /**
+     * @brief Create the general settings section
+     *
+     * Creates the UI components for configuring general application settings.
+     */
+    void create_general_settings_section();
+
+    /**
      * @brief Create the tab order configuration section
      *
      * Creates the UI components for configuring tab order and visibility.
@@ -115,6 +122,14 @@ private:
     // Main containers
     Gtk::ScrolledWindow scrolled_window_;  ///< Scrollable container for the settings
     Gtk::Box main_box_;                    ///< Main vertical box for all settings
+
+    // General settings section
+    Gtk::Frame general_settings_frame_;    ///< Frame around the general settings section
+    Gtk::Box general_settings_box_;        ///< Container for general settings components
+    Gtk::Box general_header_box_;          ///< Container for general section header
+    Gtk::Image general_icon_;              ///< Icon for the general settings section
+    Gtk::Label general_label_;             ///< Label for the general settings section
+    Gtk::CheckButton floating_check_;      ///< Checkbox for enabling floating mode by default
 
     // Tab order section
     Gtk::Frame tab_order_frame_;       ///< Frame around the tab order section

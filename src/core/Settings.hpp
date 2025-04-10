@@ -21,6 +21,15 @@
 namespace Core {
 
 /**
+ * @brief Get a setting value from the configuration file
+ * @param key The setting key to retrieve
+ * @param default_value The default value to return if the setting is not found
+ * @return The setting value or the default value if not found
+ */
+std::string get_setting(const std::string& key, const std::string& default_value = "");
+
+
+/**
  * @class SettingsWindow
  * @brief Dialog for configuring application settings
  *
@@ -62,6 +71,7 @@ private:
 
     Gtk::CheckButton autostart_check_;      ///< Checkbox for enabling application autostart
     Gtk::CheckButton notifications_check_;   ///< Checkbox for enabling notifications
+    Gtk::CheckButton floating_check_;        ///< Checkbox for enabling floating mode by default
     Gtk::ComboBoxText language_combo_;       ///< Dropdown for selecting application language
 
     std::map<std::string, std::string> settings_;  ///< Map of setting names to values

@@ -17,6 +17,29 @@
 namespace Core {
 
 /**
+ * @brief Get a setting value from the configuration file
+ * @param key The setting key to retrieve
+ * @param default_value The default value to return if the setting is not found
+ * @return The setting value or the default value if not found
+ */
+std::string get_setting(const std::string& key, const std::string& default_value) {
+    // Try to open the configuration file
+    std::string config_path = "/home/felipe/.config/ultimate-control/settings.conf";
+    std::ifstream infile(config_path);
+    if (!infile.is_open()) return default_value;  // Return default if file doesn't exist
+
+    // Read key-value pairs from the file
+    std::string k, v;
+    while (infile >> k >> v) {
+        if (k == key) {
+            return v;  // Return the value if the key is found
+        }
+    }
+
+    return default_value;  // Return default if key not found
+}
+
+/**
  * @brief Constructor for the settings window
  * @param parent Parent window for the dialog
  *
@@ -25,7 +48,8 @@ namespace Core {
 SettingsWindow::SettingsWindow(Gtk::Window& parent)
 : Gtk::Dialog("Settings", parent, true),                // Modal dialog with title
   autostart_check_("Enable autostart"),                 // Checkbox for autostart
-  notifications_check_("Enable notifications")          // Checkbox for notifications
+  notifications_check_("Enable notifications"),         // Checkbox for notifications
+  floating_check_("Start in floating mode by default")  // Checkbox for floating mode
 {
     // Set initial dialog size
     set_default_size(400, 200);
@@ -40,9 +64,10 @@ SettingsWindow::SettingsWindow(Gtk::Window& parent)
     vbox->set_margin_start(10);
     vbox->set_margin_end(10);
 
-    // Add checkboxes for autostart and notifications
+    // Add checkboxes for autostart, notifications, and floating mode
     vbox->pack_start(autostart_check_, Gtk::PACK_SHRINK);
     vbox->pack_start(notifications_check_, Gtk::PACK_SHRINK);
+    vbox->pack_start(floating_check_, Gtk::PACK_SHRINK);
 
     // Add language selection label
     auto lang_label = Gtk::make_managed<Gtk::Label>("Language:");
@@ -98,6 +123,7 @@ void SettingsWindow::load_settings() {
     // Update UI components with loaded settings
     autostart_check_.set_active(settings_["autostart"] == "1");
     notifications_check_.set_active(settings_["notifications"] == "1");
+    floating_check_.set_active(settings_["floating"] == "1");
 
     // Set the language dropdown if a language is specified
     if (!settings_["language"].empty()) {
@@ -114,6 +140,7 @@ void SettingsWindow::save_settings() {
     // Update settings map from UI components
     settings_["autostart"] = autostart_check_.get_active() ? "1" : "0";
     settings_["notifications"] = notifications_check_.get_active() ? "1" : "0";
+    settings_["floating"] = floating_check_.get_active() ? "1" : "0";
     settings_["language"] = language_combo_.get_active_text();
 
     // Try to open the configuration file for writing

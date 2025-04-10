@@ -48,18 +48,26 @@ better_control.py     * @param floating_mode Whether to make the window float on
         set_title("Ultimate Control");
         set_default_size(800, 600);
 
-        // Set window type hint to DIALOG if floating mode is enabled
-        // This makes the window float on tiling window managers
+        // Set window type hint based on floating mode
+        // DIALOG hint makes the window float on tiling window managers
         if (floating_mode) {
             set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
+        } else {
+            set_type_hint(Gdk::WINDOW_TYPE_HINT_NORMAL);
+        }
 
-            // Check if running under Hyprland
-            const char* hyprland_signature = getenv("HYPRLAND_INSTANCE_SIGNATURE");
-            if (hyprland_signature != nullptr) {
-                // We're running under Hyprland, run the specific command to ensure floating
-                std::string cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
-                std::system(cmd.c_str());
+        // Check if running under Hyprland
+        const char* hyprland_signature = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+        if (hyprland_signature != nullptr) {
+            std::string cmd;
+            if (floating_mode) {
+                // Add a rule to make the window float
+                cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
+            } else {
+                // Remove any existing floating rule
+                cmd = "hyprctl --batch 'keyword windowrulev2 unset,class:^(ultimate-control)$'";
             }
+            std::system(cmd.c_str());
         }
 
         vbox_.set_orientation(Gtk::ORIENTATION_VERTICAL);
@@ -629,6 +637,12 @@ int main(int argc, char* argv[]) {
         initial_tab = "power";
     } else if (settings_opt) {
         initial_tab = "settings";
+    }
+
+    // Check if floating mode should be enabled from settings
+    // Command-line option takes precedence over settings
+    if (!floating_opt) {
+        floating_opt = Core::get_setting("floating", "0") == "1";
     }
 
     // Initialize GTK application with unique identifier

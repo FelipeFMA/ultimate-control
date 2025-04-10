@@ -7,12 +7,14 @@
  */
 
 #include "SettingsTab.hpp"
+#include "../core/Settings.hpp"  // for Core::get_setting
 #include <iostream>
 #include <cstdlib>   // for std::exit
 #include <unistd.h>  // for execl
 #include <limits.h>  // for PATH_MAX
 #include <errno.h>   // for errno
 #include <string.h>  // for strerror
+#include <fstream>   // for std::ifstream, std::ofstream
 
 namespace Settings {
 
@@ -24,8 +26,10 @@ namespace Settings {
 SettingsTab::SettingsTab()
 : settings_(std::make_shared<TabSettings>()),           // Create settings manager
   main_box_(Gtk::ORIENTATION_VERTICAL, 15),             // Main container with 15px spacing
+  general_settings_box_(Gtk::ORIENTATION_VERTICAL, 10),  // General settings section with 10px spacing
+  general_header_box_(Gtk::ORIENTATION_HORIZONTAL, 10),  // General header with 10px spacing
   tab_order_box_(Gtk::ORIENTATION_VERTICAL, 10),        // Tab order section with 10px spacing
-  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 10), // Header with 10px spacing
+  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 10), // Tab order header with 10px spacing
   tab_list_box_(Gtk::ORIENTATION_VERTICAL, 5),          // Tab list with 5px spacing
   buttons_box_(Gtk::ORIENTATION_HORIZONTAL, 10)         // Buttons container with 10px spacing
 {
@@ -42,6 +46,9 @@ SettingsTab::SettingsTab()
     main_box_.set_margin_top(20);
     main_box_.set_margin_bottom(20);
     scrolled_window_.add(main_box_);
+
+    // Create the general settings section
+    create_general_settings_section();
 
     // Create the tab order configuration section
     create_tab_order_section();
@@ -68,6 +75,59 @@ SettingsTab::SettingsTab()
  * @brief Destructor for the settings tab
  */
 SettingsTab::~SettingsTab() = default;
+
+/**
+ * @brief Create the general settings section
+ *
+ * Creates the UI components for configuring general application settings.
+ */
+void SettingsTab::create_general_settings_section() {
+    // Configure the frame for the general settings section
+    general_settings_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
+    general_settings_frame_.set_margin_bottom(20);
+
+    // Add settings icon and title label to the header
+    general_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
+    general_label_.set_markup("<span size='large'><b>General Settings</b></span>");
+    general_label_.set_halign(Gtk::ALIGN_START);
+    general_label_.set_valign(Gtk::ALIGN_CENTER);
+
+    general_header_box_.pack_start(general_icon_, Gtk::PACK_SHRINK);
+    general_header_box_.pack_start(general_label_, Gtk::PACK_SHRINK);
+
+    // Add descriptive text explaining the settings
+    Gtk::Label* description = Gtk::manage(new Gtk::Label());
+    description->set_markup("Configure general application settings:");
+    description->set_halign(Gtk::ALIGN_START);
+    description->set_margin_bottom(10);
+
+    // Configure the floating mode checkbox
+    floating_check_.set_label("Start in floating mode by default");
+    floating_check_.set_margin_start(10);
+    floating_check_.set_active(Core::get_setting("floating", "0") == "1");
+
+    // Add a tooltip with more information
+    floating_check_.set_tooltip_text("When enabled, the application will start as a floating window. \nMay not work with all tiling window managers — tested only on Hyprland for now.");
+
+    // Create a note label for the floating mode
+    auto floating_note = Gtk::manage(new Gtk::Label());
+    floating_note->set_markup("<span size='small' style='italic'>Note: Full support on Hyprland, partial support on other tiling WMs</span>");
+    floating_note->set_halign(Gtk::ALIGN_START);
+    floating_note->set_margin_start(30);
+    floating_note->set_margin_bottom(10);
+
+    // Assemble the general settings section components
+    general_settings_box_.pack_start(general_header_box_, Gtk::PACK_SHRINK);
+    general_settings_box_.pack_start(*description, Gtk::PACK_SHRINK);
+    general_settings_box_.pack_start(floating_check_, Gtk::PACK_SHRINK);
+    general_settings_box_.pack_start(*floating_note, Gtk::PACK_SHRINK);
+
+    // Add the assembled general settings box to the frame
+    general_settings_frame_.add(general_settings_box_);
+
+    // Add the completed frame to the main container
+    main_box_.pack_start(general_settings_frame_, Gtk::PACK_SHRINK);
+}
 
 /**
  * @brief Create the tab order configuration section
@@ -256,8 +316,32 @@ void SettingsTab::on_tab_enabled_toggled(const std::string& tab_id) {
  */
 void SettingsTab::on_save_clicked() {
 
-    // Save all settings to disk
+    // Save tab settings to disk
     settings_->save();
+
+    // Save general settings to disk
+    std::ofstream outfile("/home/felipe/.config/ultimate-control/settings.conf");
+    if (outfile.is_open()) {
+        // Read existing settings first
+        std::map<std::string, std::string> settings;
+        std::ifstream infile("/home/felipe/.config/ultimate-control/settings.conf");
+        if (infile.is_open()) {
+            std::string key, value;
+            while (infile >> key >> value) {
+                settings[key] = value;
+            }
+            infile.close();
+        }
+
+        // Update with new floating setting
+        settings["floating"] = floating_check_.get_active() ? "1" : "0";
+
+        // Write all settings back
+        for (const auto& pair : settings) {
+            outfile << pair.first << " " << pair.second << "\n";
+        }
+        outfile.close();
+    }
 
     // Show a message dialog informing the user about the restart
     Gtk::MessageDialog dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
