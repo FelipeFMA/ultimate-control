@@ -162,7 +162,7 @@ void SettingsTab::create_tab_order_section() {
     tab_order_header_box_.set_spacing(8);
 
     // Add settings icon and title label to the header
-    tab_order_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_LARGE_TOOLBAR);
+    tab_order_icon_.set_from_icon_name("view-list-symbolic", Gtk::ICON_SIZE_LARGE_TOOLBAR);
     tab_order_label_.set_markup("<span size='large'><b>Tab Settings</b></span>");
     tab_order_label_.set_halign(Gtk::ALIGN_START);
     tab_order_label_.set_valign(Gtk::ALIGN_CENTER);
