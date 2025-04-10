@@ -23,6 +23,7 @@ file(GLOB_RECURSE SOURCES
     src/core/*.cpp
     src/settings/*.cpp
     src/utils/*.cpp
+    src/utils/qrcodegen/*.cpp
     src/bluetooth/*.cpp
     src/wifi/*.cpp
     src/volume/*.cpp

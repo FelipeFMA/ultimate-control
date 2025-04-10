@@ -4,6 +4,7 @@
 #include <gtkmm.h>
 #include "WifiManager.hpp"
 #include <memory>
+#include "../utils/QRCode.hpp"
 
 namespace Wifi {
 
@@ -15,6 +16,7 @@ public:
 private:
     void on_connect_clicked();
     void on_forget_clicked();
+    void on_share_clicked();
     std::string convert_signal_to_quality(int signal_strength);
     void update_signal_icon(int signal_strength);
     void update_security_icon(bool secured);
@@ -38,6 +40,7 @@ private:
     // Control widgets
     Gtk::Button connect_button_;
     Gtk::Button forget_button_;
+    Gtk::Button share_button_;
 };
 
 } // namespace Wifi
