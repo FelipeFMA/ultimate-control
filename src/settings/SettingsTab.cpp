@@ -340,11 +340,12 @@ void SettingsTab::on_save_clicked() {
     settings_->save();
 
     // Save general settings to disk
-    std::ofstream outfile("/home/felipe/.config/ultimate-control/settings.conf");
+    std::string config_path = "/home/felipe/.config/ultimate-control/general.conf";
+    std::ofstream outfile(config_path);
     if (outfile.is_open()) {
         // Read existing settings first
         std::map<std::string, std::string> settings;
-        std::ifstream infile("/home/felipe/.config/ultimate-control/settings.conf");
+        std::ifstream infile(config_path);
         if (infile.is_open()) {
             std::string key, value;
             while (infile >> key >> value) {

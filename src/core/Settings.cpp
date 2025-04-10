@@ -24,7 +24,7 @@ namespace Core {
  */
 std::string get_setting(const std::string& key, const std::string& default_value) {
     // Try to open the configuration file
-    std::string config_path = "/home/felipe/.config/ultimate-control/settings.conf";
+    std::string config_path = "/home/felipe/.config/ultimate-control/general.conf";
     std::ifstream infile(config_path);
     if (!infile.is_open()) return default_value;  // Return default if file doesn't exist
 
@@ -111,7 +111,8 @@ SettingsWindow::~SettingsWindow() {
  */
 void SettingsWindow::load_settings() {
     // Try to open the configuration file
-    std::ifstream infile("/home/felipe/.config/ultimate-control/settings.conf");
+    std::string config_path = "/home/felipe/.config/ultimate-control/general.conf";
+    std::ifstream infile(config_path);
     if (!infile.is_open()) return;  // Return if file doesn't exist or can't be opened
 
     // Read key-value pairs from the file
@@ -144,7 +145,7 @@ void SettingsWindow::save_settings() {
     settings_["language"] = language_combo_.get_active_text();
 
     // Try to open the configuration file for writing
-    std::ofstream outfile("/home/felipe/.config/ultimate-control/settings.conf");
+    std::ofstream outfile("/home/felipe/.config/ultimate-control/general.conf");
     if (!outfile.is_open()) {
         std::cerr << "Failed to save settings\n";
         return;  // Return if file can't be opened for writing

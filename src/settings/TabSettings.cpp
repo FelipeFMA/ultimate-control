@@ -27,9 +27,9 @@ TabSettings::TabSettings() {
     // Determine the configuration file path based on the user's home directory
     const char* home_dir = getenv("HOME");
     if (home_dir) {
-        config_path_ = std::string(home_dir) + "/.config/ultimate-control/settings.json";
+        config_path_ = std::string(home_dir) + "/.config/ultimate-control/taborder.json";
     } else {
-        config_path_ = "/tmp/ultimate-control-settings.json";
+        config_path_ = "/tmp/ultimate-control-taborder.json";
     }
 
     // Configuration path is now set
