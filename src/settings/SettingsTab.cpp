@@ -1,3 +1,11 @@
+/**
+ * @file SettingsTab.cpp
+ * @brief Implementation of the settings tab for Ultimate Control
+ *
+ * This file implements the SettingsTab class which provides a user interface
+ * for configuring application settings, including tab visibility and order.
+ */
+
 #include "SettingsTab.hpp"
 #include <iostream>
 #include <cstdlib>   // for std::exit
@@ -8,32 +16,37 @@
 
 namespace Settings {
 
+/**
+ * @brief Constructor for the settings tab
+ *
+ * Initializes the settings manager and creates the UI components.
+ */
 SettingsTab::SettingsTab()
-: settings_(std::make_shared<TabSettings>()),
-  main_box_(Gtk::ORIENTATION_VERTICAL, 15),
-  tab_order_box_(Gtk::ORIENTATION_VERTICAL, 10),
-  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 10),
-  tab_list_box_(Gtk::ORIENTATION_VERTICAL, 5),
-  buttons_box_(Gtk::ORIENTATION_HORIZONTAL, 10)
+: settings_(std::make_shared<TabSettings>()),           // Create settings manager
+  main_box_(Gtk::ORIENTATION_VERTICAL, 15),             // Main container with 15px spacing
+  tab_order_box_(Gtk::ORIENTATION_VERTICAL, 10),        // Tab order section with 10px spacing
+  tab_order_header_box_(Gtk::ORIENTATION_HORIZONTAL, 10), // Header with 10px spacing
+  tab_list_box_(Gtk::ORIENTATION_VERTICAL, 5),          // Tab list with 5px spacing
+  buttons_box_(Gtk::ORIENTATION_HORIZONTAL, 10)         // Buttons container with 10px spacing
 {
-    // Set up the main container
+    // Set up the main container orientation
     set_orientation(Gtk::ORIENTATION_VERTICAL);
 
-    // Add a scrolled window
+    // Add a scrolled window to contain all settings
     scrolled_window_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     pack_start(scrolled_window_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Set up the main box inside the scrolled window
+    // Set up the main box inside the scrolled window with margins
     main_box_.set_margin_start(20);
     main_box_.set_margin_end(20);
     main_box_.set_margin_top(20);
     main_box_.set_margin_bottom(20);
     scrolled_window_.add(main_box_);
 
-    // Create the tab order section
+    // Create the tab order configuration section
     create_tab_order_section();
 
-    // Add the save button
+    // Create and configure the save button
     save_button_.set_label("Save Settings");
     save_button_.set_image_from_icon_name("document-save-symbolic", Gtk::ICON_SIZE_BUTTON);
     save_button_.set_always_show_image(true);
@@ -44,17 +57,25 @@ SettingsTab::SettingsTab()
 
     main_box_.pack_start(buttons_box_, Gtk::PACK_SHRINK);
 
-    // Update the tab list
+    // Initialize the tab list with current settings
     update_tab_list();
 
     show_all_children();
     std::cout << "Settings tab loaded!" << std::endl;
 }
 
+/**
+ * @brief Destructor for the settings tab
+ */
 SettingsTab::~SettingsTab() = default;
 
+/**
+ * @brief Create the tab order configuration section
+ *
+ * Creates the UI components for configuring tab order and visibility.
+ */
 void SettingsTab::create_tab_order_section() {
-    // Set up the tab order section frame
+    // Configure the frame and container for the tab order section
     tab_order_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     tab_order_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
     tab_order_box_.set_spacing(10);
@@ -63,11 +84,11 @@ void SettingsTab::create_tab_order_section() {
     tab_order_box_.set_margin_top(15);
     tab_order_box_.set_margin_bottom(15);
 
-    // Set up the tab order header
+    // Configure the header for the tab order section
     tab_order_header_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     tab_order_header_box_.set_spacing(10);
 
-    // Add icon and label to the header
+    // Add settings icon and title label to the header
     tab_order_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
     tab_order_label_.set_markup("<span size='large'><b>Tab Settings</b></span>");
     tab_order_label_.set_halign(Gtk::ALIGN_START);
@@ -76,60 +97,67 @@ void SettingsTab::create_tab_order_section() {
     tab_order_header_box_.pack_start(tab_order_icon_, Gtk::PACK_SHRINK);
     tab_order_header_box_.pack_start(tab_order_label_, Gtk::PACK_SHRINK);
 
-    // Add description label
+    // Add descriptive text explaining the settings
     Gtk::Label* description = Gtk::manage(new Gtk::Label());
     description->set_markup("Configure which tabs are visible and their order:");
     description->set_halign(Gtk::ALIGN_START);
     description->set_margin_bottom(10);
 
-    // Add the tab list box
+    // Configure the container for the list of tabs
     tab_list_box_.set_margin_start(10);
     tab_list_box_.set_margin_end(10);
 
-    // Add components to the tab order box
+    // Assemble the tab order section components
     tab_order_box_.pack_start(tab_order_header_box_, Gtk::PACK_SHRINK);
     tab_order_box_.pack_start(*description, Gtk::PACK_SHRINK);
     tab_order_box_.pack_start(tab_list_box_, Gtk::PACK_SHRINK);
 
-    // Add the tab order box to the frame
+    // Add the assembled tab order box to the frame
     tab_order_frame_.add(tab_order_box_);
 
-    // Add the frame to the main box
+    // Add the completed frame to the main container
     main_box_.pack_start(tab_order_frame_, Gtk::PACK_SHRINK);
 }
 
+/**
+ * @brief Update the tab list display
+ *
+ * Updates the list of tabs based on the current settings.
+ * Creates a row for each tab with controls for enabling/disabling
+ * and changing the order.
+ */
 void SettingsTab::update_tab_list() {
-    // Clear existing rows
+    // Remove and clear all existing tab rows
     for (auto& row : tab_rows_) {
         tab_list_box_.remove(row->row_box);
     }
     tab_rows_.clear();
 
-    // Get all tabs
+    // Get the current list of tabs from settings
     auto tabs = settings_->get_all_tabs();
 
-    // Create a row for each tab
+    // Create a UI row for each tab in the settings
     for (const auto& tab : tabs) {
         auto row = std::make_unique<TabRow>();
         row->id = tab.id;
 
-        // Set up the row box
+        // Configure the horizontal container for this tab's row
         row->row_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
         row->row_box.set_spacing(10);
         row->row_box.set_margin_bottom(5);
 
-        // Set up the enabled checkbox
+        // Create the checkbox for enabling/disabling the tab
         row->enabled_check.set_active(tab.enabled);
         row->enabled_check.signal_toggled().connect(
             [this, id = tab.id]() { on_tab_enabled_toggled(id); });
 
-        // Set up the name label with icon
+        // Create the tab name label with its icon
         auto icon = Gtk::manage(new Gtk::Image());
         icon->set_from_icon_name(tab.icon_name, Gtk::ICON_SIZE_MENU);
         row->name_label.set_text(tab.name);
         row->name_label.set_xalign(0.0);
 
-        // Set up the up/down buttons
+        // Create the buttons for changing tab order
         row->up_button.set_image_from_icon_name("go-up-symbolic", Gtk::ICON_SIZE_BUTTON);
         row->up_button.set_tooltip_text("Move up");
         row->up_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsTab::on_move_up_clicked));
@@ -138,21 +166,21 @@ void SettingsTab::update_tab_list() {
         row->down_button.set_tooltip_text("Move down");
         row->down_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsTab::on_move_down_clicked));
 
-        // Add components to the row box
+        // Assemble all components into the row
         row->row_box.pack_start(row->enabled_check, Gtk::PACK_SHRINK);
         row->row_box.pack_start(*icon, Gtk::PACK_SHRINK);
         row->row_box.pack_start(row->name_label, Gtk::PACK_EXPAND_WIDGET);
         row->row_box.pack_end(row->down_button, Gtk::PACK_SHRINK);
         row->row_box.pack_end(row->up_button, Gtk::PACK_SHRINK);
 
-        // Add the row to the list
+        // Add the completed row to the tab list
         tab_list_box_.pack_start(row->row_box, Gtk::PACK_SHRINK);
 
-        // Store the row
+        // Store the row for later reference
         tab_rows_.push_back(std::move(row));
     }
 
-    // Update button sensitivity
+    // Disable up button for first tab and down button for last tab
     if (!tab_rows_.empty()) {
         tab_rows_.front()->up_button.set_sensitive(false);
         tab_rows_.back()->down_button.set_sensitive(false);
@@ -161,13 +189,18 @@ void SettingsTab::update_tab_list() {
     show_all_children();
 }
 
+/**
+ * @brief Handler for move up button clicks
+ *
+ * Moves the selected tab up in the order.
+ */
 void SettingsTab::on_move_up_clicked() {
-    // Find which button was clicked
+    // Determine which tab's up button was clicked
     for (size_t i = 0; i < tab_rows_.size(); ++i) {
         if (tab_rows_[i]->up_button.has_focus()) {
-            // Move this tab up
+            // Attempt to move this tab up in the order
             if (settings_->move_tab_up(tab_rows_[i]->id)) {
-                // Save settings immediately
+                // Save settings and update the UI immediately
                 settings_->save();
                 update_tab_list();
             }
@@ -176,13 +209,18 @@ void SettingsTab::on_move_up_clicked() {
     }
 }
 
+/**
+ * @brief Handler for move down button clicks
+ *
+ * Moves the selected tab down in the order.
+ */
 void SettingsTab::on_move_down_clicked() {
-    // Find which button was clicked
+    // Determine which tab's down button was clicked
     for (size_t i = 0; i < tab_rows_.size(); ++i) {
         if (tab_rows_[i]->down_button.has_focus()) {
-            // Move this tab down
+            // Attempt to move this tab down in the order
             if (settings_->move_tab_down(tab_rows_[i]->id)) {
-                // Save settings immediately
+                // Save settings and update the UI immediately
                 settings_->save();
                 update_tab_list();
             }
@@ -191,59 +229,78 @@ void SettingsTab::on_move_down_clicked() {
     }
 }
 
+/**
+ * @brief Handler for tab enabled checkbox toggles
+ * @param tab_id ID of the tab whose enabled state changed
+ *
+ * Updates the enabled state of a tab when its checkbox is toggled.
+ */
 void SettingsTab::on_tab_enabled_toggled(const std::string& tab_id) {
-    // Find the row for this tab
+    // Find the row corresponding to this tab ID
     for (const auto& row : tab_rows_) {
         if (row->id == tab_id) {
             bool enabled = row->enabled_check.get_active();
-            // Update the setting
+            // Update the tab's enabled state in settings
             settings_->set_tab_enabled(tab_id, enabled);
-            // Save settings immediately
+            // Save settings to disk immediately
             settings_->save();
             break;
         }
     }
 }
 
+/**
+ * @brief Handler for save button clicks
+ *
+ * Saves the settings and restarts the application to apply changes.
+ */
 void SettingsTab::on_save_clicked() {
 
-    // Save the settings
+    // Save all settings to disk
     settings_->save();
 
-    // Show a message dialog to inform the user
+    // Show a message dialog informing the user about the restart
     Gtk::MessageDialog dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
                              "Settings saved. The application will now restart to apply changes.",
                              false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
     dialog.run();
 
-    // Get the path to the current executable
+    // Get the absolute path to the current executable for restart
     char exe_path[PATH_MAX];
     ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path)-1);
     if (len != -1) {
         exe_path[len] = '\0';
 
-        // Restart the application
+        // Log the restart attempt
         std::cout << "Restarting application: " << exe_path << std::endl;
 
         // Use execl to replace the current process with a new instance
-        // This is cleaner than using system() as it doesn't create a new process
+        // This is cleaner than using system() as it doesn't create a new process hierarchy
         execl(exe_path, exe_path, nullptr);
 
-        // If execl fails, print an error
+        // If execl fails (which it shouldn't if we reach this point), log the error
         std::cerr << "Failed to restart application: " << strerror(errno) << std::endl;
     } else {
         std::cerr << "Failed to get executable path: " << strerror(errno) << std::endl;
     }
 
-    // As a fallback, exit the application
-    // The user can restart it manually
+    // As a fallback if we can't restart automatically,
+    // exit the application so the user can restart it manually
     std::exit(0);
 }
 
+/**
+ * @brief Set the callback for settings changes
+ * @param callback Function to call when settings are changed
+ */
 void SettingsTab::set_settings_changed_callback(SettingsChangedCallback callback) {
     settings_changed_callback_ = callback;
 }
 
+/**
+ * @brief Get the tab settings object
+ * @return Shared pointer to the TabSettings object
+ */
 std::shared_ptr<TabSettings> SettingsTab::get_tab_settings() const {
     return settings_;
 }
