@@ -1,5 +1,7 @@
 #include "WifiNetworkWidget.hpp"
 #include <gtkmm/messagedialog.h>
+#include <gtkmm/spinner.h>
+#include <glibmm/thread.h>
 #include <iostream>
 
 namespace Wifi {
@@ -148,10 +150,43 @@ void WifiNetworkWidget::update_connection_status(bool connected) {
 }
 
 void WifiNetworkWidget::on_connect_clicked() {
+    // Store the SSID we're trying to connect to
+    std::string target_ssid = network_.ssid;
+
     if (network_.connected) {
         manager_->disconnect();
     } else {
-        std::string password;
+        // First try to connect without a password (for saved networks)
+        std::string security_type = network_.secured ? "wpa-psk" : "";
+
+        // Try to connect with empty password first - this will use saved connections if available
+        std::cout << "Trying to connect to " << target_ssid << " using saved credentials..." << std::endl;
+        manager_->connect(target_ssid, "", security_type);
+
+        // Wait a moment for the connection to establish
+        Glib::usleep(1000000); // 1 second
+
+        // Check if we're now connected to this network
+        manager_->scan_networks();
+        bool connected = false;
+        for (const auto& net : manager_->get_networks()) {
+            if (net.ssid == target_ssid && net.connected) {
+                connected = true;
+                break;
+            }
+        }
+
+        if (connected) {
+            // Show a success message
+            Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                                           "Successfully connected to " + target_ssid,
+                                           false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+            success_dialog.set_secondary_text("Connected using saved credentials");
+            success_dialog.run();
+            return;
+        }
+
+        // If we're still not connected and it's a secured network, ask for password
         if (network_.secured) {
             // Create a styled dialog for password entry
             Gtk::Dialog dialog("Enter WiFi Password", true);
@@ -169,7 +204,7 @@ void WifiNetworkWidget::on_connect_clicked() {
 
             // Add network name label
             Gtk::Label* network_label = Gtk::manage(new Gtk::Label());
-            network_label->set_markup("<b>" + network_.ssid + "</b>");
+            network_label->set_markup("<b>" + target_ssid + "</b>");
             network_label->set_halign(Gtk::ALIGN_START);
             entry_box->pack_start(*network_label, Gtk::PACK_SHRINK);
 
@@ -195,14 +230,41 @@ void WifiNetworkWidget::on_connect_clicked() {
 
             int result = dialog.run();
             if (result == Gtk::RESPONSE_OK) {
-                password = entry->get_text();
-            } else {
-                return;
+                std::string password = entry->get_text();
+
+                // Show a simple message
+                std::cout << "Connecting to " << target_ssid << " with password..." << std::endl;
+
+                // Connect directly
+                manager_->connect(target_ssid, password, security_type);
+
+                // Wait a moment for the connection to establish
+                Glib::usleep(1000000); // 1 second
+
+                // Check if connection was successful
+                manager_->scan_networks();
+                bool connected = false;
+                for (const auto& net : manager_->get_networks()) {
+                    if (net.ssid == target_ssid && net.connected) {
+                        connected = true;
+                        break;
+                    }
+                }
+
+                if (connected) {
+                    Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                                                  "Successfully connected to " + target_ssid,
+                                                  false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+                    success_dialog.run();
+                } else {
+                    Gtk::MessageDialog error_dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                                                "Failed to connect to " + target_ssid,
+                                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                    error_dialog.set_secondary_text("Please check your password and try again.");
+                    error_dialog.run();
+                }
             }
         }
-        // Use wpa-psk for secured networks, or empty for open networks
-        std::string security_type = network_.secured ? "wpa-psk" : "";
-        manager_->connect(network_.ssid, password, security_type);
     }
 }
 

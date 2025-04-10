@@ -34,6 +34,7 @@ public:
     bool is_wifi_enabled() const;
     void set_update_callback(UpdateCallback cb);
     void set_state_callback(StateCallback cb);
+    const NetworkList& get_networks() const;
 
 private:
     class Impl;

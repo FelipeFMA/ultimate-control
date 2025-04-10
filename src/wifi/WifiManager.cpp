@@ -86,6 +86,18 @@ public:
 
         std::cout << "Connecting to WiFi network: " << ssid << "..." << std::endl;
 
+        // First, try to connect using an existing saved connection
+        std::string saved_cmd = "nmcli con up \"" + ssid + "\" 2>/dev/null";
+        int saved_result = std::system(saved_cmd.c_str());
+
+        if (saved_result == 0) {
+            std::cout << "Successfully connected to saved network: " << ssid << std::endl;
+            scan_networks();
+            return;
+        }
+
+        // If we couldn't connect using a saved connection, proceed with password
+
         // For secured networks, directly create a proper connection profile
         if (!password.empty() && !security_type.empty()) {
             // Get the WiFi interface name
@@ -227,6 +239,10 @@ public:
         state_callback_ = cb;
     }
 
+    const std::vector<Network>& get_networks() const {
+        return networks_;
+    }
+
 private:
     std::vector<Network> networks_;
     WifiManager::UpdateCallback update_callback_;
@@ -306,6 +322,10 @@ void WifiManager::set_update_callback(UpdateCallback cb) {
 
 void WifiManager::set_state_callback(StateCallback cb) {
     impl_->set_state_callback(cb);
+}
+
+const WifiManager::NetworkList& WifiManager::get_networks() const {
+    return impl_->get_networks();
 }
 
 } // namespace Wifi
