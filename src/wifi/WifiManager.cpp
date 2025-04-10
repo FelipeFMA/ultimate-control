@@ -24,7 +24,7 @@ public:
 
         networks_.clear();
 
-        std::string cmd = "nmcli -t -f active,ssid,bssid,signal,security dev wifi";
+        std::string cmd = "nmcli -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list";
         std::array<char, 4096> buffer;
         std::string result;
 
@@ -44,17 +44,31 @@ public:
             result.erase(0, pos + 1);
 
             auto tokens = split(line, ':');
-            if (tokens.size() >= 5) {
+            if (tokens.size() >= 4) {
                 Network net;
-                net.connected = (tokens[0] == "yes");
+                net.connected = (tokens[0] == "*");
                 net.ssid = tokens[1];
-                net.bssid = tokens[2];
+                net.bssid = ""; // We don't have BSSID in this command
                 try {
-                    net.signal_strength = std::stoi(tokens[3]);
+                    // Parse the signal strength from nmcli
+                    int signal = std::stoi(tokens[2]);
+
+                    // Store the signal strength
+                    net.signal_strength = signal;
+
+                    // Print the raw tokens for debugging
+                    std::cout << "Network: " << net.ssid << ", Raw tokens: ";
+                    for (size_t i = 0; i < tokens.size(); ++i) {
+                        std::cout << "[" << i << "]=" << tokens[i] << " ";
+                    }
+                    std::cout << std::endl;
+
+                    std::cout << "Network: " << net.ssid << ", Signal strength: " << net.signal_strength << "%" << std::endl;
                 } catch (...) {
                     net.signal_strength = 0;
+                    std::cout << "Failed to parse signal strength for network: " << net.ssid << std::endl;
                 }
-                net.secured = (tokens[4] != "--");
+                net.secured = (tokens[3] != "--" && !tokens[3].empty());
                 networks_.push_back(net);
             }
         }

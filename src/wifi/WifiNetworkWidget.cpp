@@ -1,5 +1,6 @@
 #include "WifiNetworkWidget.hpp"
 #include <gtkmm/messagedialog.h>
+#include <iostream>
 
 namespace Wifi {
 
@@ -15,6 +16,8 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
   connect_button_(),
   forget_button_()
 {
+  // Debug: Print the signal strength in the constructor
+  std::cout << "WifiNetworkWidget constructor for " << network.ssid << ", signal strength: " << network.signal_strength << "%" << std::endl;
     // Set up the main container
     set_margin_start(10);
     set_margin_end(10);
@@ -56,6 +59,10 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
     Gtk::Box* signal_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 4));
     Gtk::Label* signal_prefix = Gtk::manage(new Gtk::Label("Signal Strength:"));
     signal_box->pack_start(*signal_prefix, Gtk::PACK_SHRINK);
+
+    // Set the signal label text directly
+    signal_label_.set_text(std::to_string(network_.signal_strength) + "%");
+
     signal_box->pack_start(signal_label_, Gtk::PACK_SHRINK);
 
     // Set up the connect button with an icon
@@ -90,9 +97,17 @@ WifiNetworkWidget::WifiNetworkWidget(const Network& network, std::shared_ptr<Wif
 
 WifiNetworkWidget::~WifiNetworkWidget() = default;
 
+std::string WifiNetworkWidget::convert_signal_to_quality(int signal_strength) {
+    // Simply return the signal strength as a percentage
+    // This is the raw value from nmcli which is already a percentage
+    std::cout << "Signal strength for " << network_.ssid << ": " << signal_strength << "%" << std::endl;
+    return std::to_string(signal_strength) + "%";
+}
+
 void WifiNetworkWidget::update_signal_icon(int signal_strength) {
     std::string icon_name;
 
+    // Use signal_strength directly to determine the icon
     if (signal_strength < 20) {
         icon_name = "network-wireless-signal-none-symbolic";
     } else if (signal_strength < 40) {

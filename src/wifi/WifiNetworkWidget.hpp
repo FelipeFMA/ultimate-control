@@ -15,6 +15,7 @@ public:
 private:
     void on_connect_clicked();
     void on_forget_clicked();
+    std::string convert_signal_to_quality(int signal_strength);
     void update_signal_icon(int signal_strength);
     void update_security_icon(bool secured);
     void update_connection_status(bool connected);
