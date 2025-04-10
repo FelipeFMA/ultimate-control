@@ -167,9 +167,68 @@ public:
     void forget_network(const std::string& ssid) {
         std::cout << "Forgetting network: " << ssid << std::endl;
 
-        // Delete the connection with the same name as the SSID
-        std::string delete_cmd = "nmcli connection delete \"" + ssid + "\" 2>/dev/null || true";
-        std::system(delete_cmd.c_str());
+        // First, get a list of all connections
+        std::string cmd = "nmcli -t -f NAME,UUID,TYPE connection show";
+        std::array<char, 4096> buffer;
+        std::string result;
+
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (!pipe) {
+            std::cerr << "Failed to run nmcli to find connections" << std::endl;
+            return;
+        }
+
+        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+            result += buffer.data();
+        }
+        pclose(pipe);
+
+        // Parse the output to find all WiFi connections
+        size_t pos = 0;
+        std::vector<std::pair<std::string, std::string>> wifi_connections; // name, uuid pairs
+
+        while ((pos = result.find('\n')) != std::string::npos) {
+            std::string line = result.substr(0, pos);
+            result.erase(0, pos + 1);
+
+            auto tokens = split(line, ':');
+            if (tokens.size() >= 3 && tokens[2] == "802-11-wireless") {
+                wifi_connections.push_back({tokens[0], tokens[1]});
+            }
+        }
+
+        // Now check each WiFi connection to see if it's for our SSID
+        bool deleted_any = false;
+
+        for (const auto& conn : wifi_connections) {
+            // Get the SSID for this connection
+            std::string check_cmd = "nmcli -g 802-11-wireless.ssid connection show " + conn.second + " 2>/dev/null";
+            FILE* check_pipe = popen(check_cmd.c_str(), "r");
+            if (!check_pipe) continue;
+
+            std::string conn_ssid;
+            if (fgets(buffer.data(), buffer.size(), check_pipe) != nullptr) {
+                conn_ssid = buffer.data();
+                // Trim whitespace
+                conn_ssid.erase(0, conn_ssid.find_first_not_of(" \t\n\r"));
+                conn_ssid.erase(conn_ssid.find_last_not_of(" \t\n\r") + 1);
+            }
+            pclose(check_pipe);
+
+            // If this connection is for our SSID, delete it
+            if (conn_ssid == ssid) {
+                std::string delete_cmd = "nmcli connection delete " + conn.second;
+                std::cout << "Deleting connection '" << conn.first << "' (UUID: " << conn.second << ") for SSID: " << ssid << std::endl;
+                std::system(delete_cmd.c_str());
+                deleted_any = true;
+            }
+        }
+
+        // If we didn't find any connections for this SSID, try deleting by name as a fallback
+        if (!deleted_any) {
+            std::string delete_cmd = "nmcli connection delete \"" + ssid + "\" 2>/dev/null || true";
+            std::system(delete_cmd.c_str());
+        }
 
         // Also clean up any temp connections that might have been created
         std::string cleanup_cmd = "nmcli -t -f NAME connection show | grep \"temp-conn-\" | xargs -r -n1 nmcli connection delete 2>/dev/null || true";

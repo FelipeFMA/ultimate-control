@@ -269,6 +269,9 @@ void WifiNetworkWidget::on_connect_clicked() {
 }
 
 void WifiNetworkWidget::on_forget_clicked() {
+    // Store the SSID we're trying to forget
+    std::string target_ssid = network_.ssid;
+
     // Create a confirmation dialog
     Gtk::MessageDialog dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
                              "Are you sure you want to forget this network?",
@@ -281,7 +284,7 @@ void WifiNetworkWidget::on_forget_clicked() {
     content_box->pack_start(*wifi_icon, Gtk::PACK_SHRINK);
 
     Gtk::Label* network_label = Gtk::manage(new Gtk::Label());
-    network_label->set_markup("<b>" + network_.ssid + "</b>");
+    network_label->set_markup("<b>" + target_ssid + "</b>");
     network_label->set_halign(Gtk::ALIGN_START);
     content_box->pack_start(*network_label, Gtk::PACK_SHRINK);
 
@@ -290,11 +293,21 @@ void WifiNetworkWidget::on_forget_clicked() {
 
     int result = dialog.run();
     if (result == Gtk::RESPONSE_YES) {
-        manager_->forget_network(network_.ssid);
+        manager_->forget_network(target_ssid);
+
+        // Show a success message
+        Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window*>(get_toplevel()),
+                                       "Network forgotten",
+                                       false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+        success_dialog.set_secondary_text("Successfully removed all saved connections for " + target_ssid);
+        success_dialog.run();
     }
 }
 
 void WifiNetworkWidget::on_share_clicked() {
+    // Store the SSID we're trying to share
+    std::string target_ssid = network_.ssid;
+
     // Create a dialog to display the QR code
     Gtk::Dialog dialog("Share WiFi Network", *dynamic_cast<Gtk::Window*>(get_toplevel()), true);
     dialog.set_default_size(350, 400);
@@ -311,7 +324,7 @@ void WifiNetworkWidget::on_share_clicked() {
     header_box->pack_start(*wifi_icon, Gtk::PACK_SHRINK);
 
     Gtk::Label* network_label = Gtk::manage(new Gtk::Label());
-    network_label->set_markup("<span size='large'><b>" + network_.ssid + "</b></span>");
+    network_label->set_markup("<span size='large'><b>" + target_ssid + "</b></span>");
     network_label->set_halign(Gtk::ALIGN_START);
     header_box->pack_start(*network_label, Gtk::PACK_SHRINK);
 
@@ -364,7 +377,7 @@ void WifiNetworkWidget::on_share_clicked() {
 
     // Format the WiFi network information
     std::string auth_type = network_.secured ? "WPA" : "nopass";
-    std::string qr_data = Utils::QRCode::formatWifiNetwork(network_.ssid, password, false, auth_type);
+    std::string qr_data = Utils::QRCode::formatWifiNetwork(target_ssid, password, false, auth_type);
 
     // Encode the data
     qrcode.encode(qr_data);
