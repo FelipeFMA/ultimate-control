@@ -28,14 +28,14 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
 
     // Get the content area and configure its margins and spacing
     auto content = get_content_area();
-    content->set_margin_top(10);
-    content->set_margin_bottom(10);
-    content->set_margin_start(10);
-    content->set_margin_end(10);
-    content->set_spacing(10);
+    content->set_margin_top(20);
+    content->set_margin_bottom(20);
+    content->set_margin_start(20);
+    content->set_margin_end(20);
+    content->set_spacing(15);
 
     // Create and configure the header with icon and title
-    auto header_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 10);
+    auto header_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 15);
     auto header_icon = Gtk::make_managed<Gtk::Image>();
     header_icon->set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
     header_box->pack_start(*header_icon, Gtk::PACK_SHRINK);
@@ -53,13 +53,18 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     description->set_markup("Configure the commands that will be executed when pressing the power buttons:");
     description->set_halign(Gtk::ALIGN_START);
     description->set_line_wrap(true);
+    description->set_margin_top(5);
+    description->set_margin_bottom(15);
     content->pack_start(*description, Gtk::PACK_SHRINK);
 
     // Create a grid layout for the command entry fields
     auto grid = Gtk::make_managed<Gtk::Grid>();
-    grid->set_row_spacing(10);
-    grid->set_column_spacing(10);
+    grid->set_row_spacing(15);
+    grid->set_column_spacing(15);
     grid->set_margin_top(10);
+    grid->set_margin_bottom(15);
+    grid->set_margin_start(5);
+    grid->set_margin_end(5);
 
     // Add entry fields for each power command
     int row = 0;
@@ -67,7 +72,9 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Add entry field for shutdown command
     command_entries_["shutdown"].label.set_text("Shutdown command:");
     command_entries_["shutdown"].label.set_halign(Gtk::ALIGN_START);
+    command_entries_["shutdown"].label.set_margin_start(5);
     command_entries_["shutdown"].entry.set_hexpand(true);
+    command_entries_["shutdown"].entry.set_margin_end(5);
     grid->attach(command_entries_["shutdown"].label, 0, row, 1, 1);
     grid->attach(command_entries_["shutdown"].entry, 1, row, 1, 1);
     row++;
@@ -75,7 +82,9 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Add entry field for reboot command
     command_entries_["reboot"].label.set_text("Reboot command:");
     command_entries_["reboot"].label.set_halign(Gtk::ALIGN_START);
+    command_entries_["reboot"].label.set_margin_start(5);
     command_entries_["reboot"].entry.set_hexpand(true);
+    command_entries_["reboot"].entry.set_margin_end(5);
     grid->attach(command_entries_["reboot"].label, 0, row, 1, 1);
     grid->attach(command_entries_["reboot"].entry, 1, row, 1, 1);
     row++;
@@ -83,7 +92,9 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Add entry field for suspend command
     command_entries_["suspend"].label.set_text("Suspend command:");
     command_entries_["suspend"].label.set_halign(Gtk::ALIGN_START);
+    command_entries_["suspend"].label.set_margin_start(5);
     command_entries_["suspend"].entry.set_hexpand(true);
+    command_entries_["suspend"].entry.set_margin_end(5);
     grid->attach(command_entries_["suspend"].label, 0, row, 1, 1);
     grid->attach(command_entries_["suspend"].entry, 1, row, 1, 1);
     row++;
@@ -91,7 +102,9 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Add entry field for hibernate command
     command_entries_["hibernate"].label.set_text("Hibernate command:");
     command_entries_["hibernate"].label.set_halign(Gtk::ALIGN_START);
+    command_entries_["hibernate"].label.set_margin_start(5);
     command_entries_["hibernate"].entry.set_hexpand(true);
+    command_entries_["hibernate"].entry.set_margin_end(5);
     grid->attach(command_entries_["hibernate"].label, 0, row, 1, 1);
     grid->attach(command_entries_["hibernate"].entry, 1, row, 1, 1);
     row++;
@@ -99,7 +112,9 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Add entry field for lock screen command
     command_entries_["lock"].label.set_text("Lock screen command:");
     command_entries_["lock"].label.set_halign(Gtk::ALIGN_START);
+    command_entries_["lock"].label.set_margin_start(5);
     command_entries_["lock"].entry.set_hexpand(true);
+    command_entries_["lock"].entry.set_margin_end(5);
     grid->attach(command_entries_["lock"].label, 0, row, 1, 1);
     grid->attach(command_entries_["lock"].entry, 1, row, 1, 1);
 
@@ -108,7 +123,8 @@ PowerSettingsDialog::PowerSettingsDialog(Gtk::Window& parent, std::shared_ptr<Po
     // Create a button box for the reset button
     auto button_box = Gtk::manage(new Gtk::ButtonBox(Gtk::ORIENTATION_HORIZONTAL));
     button_box->set_layout(Gtk::BUTTONBOX_END);
-    button_box->set_spacing(5);
+    button_box->set_spacing(10);
+    button_box->set_margin_top(5);
 
     // Create and configure the reset to defaults button
     reset_button_ = Gtk::manage(new Gtk::Button("_Reset to Defaults"));
