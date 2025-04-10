@@ -97,6 +97,21 @@ better_control.py     * @param floating_mode Whether to make the window float on
             return true; // Prevent the default handler from running
         });
 
+        // Handle keybinds to close window
+        signal_key_press_event().connect([](GdkEventKey* event) -> bool {
+            if (event->keyval == 'q' || event->keyval == 'Q') {
+                if (event->state & GDK_SHIFT_MASK) {
+                    std::cout << "Application closed" << std::endl;
+                    std::quick_exit(0);
+                } else {
+                    std::cout << "Application closed" << std::endl;
+                    std::quick_exit(0);
+                }
+            }
+            return false;
+        });
+
+
         // Show all children
         show_all_children();
 
