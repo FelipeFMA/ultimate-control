@@ -31,8 +31,8 @@ public:
     /**
      * @brief Constructor for the WiFi tab
      *
-     * Initializes the WiFi manager, creates the UI components,
-     * and performs an initial network scan.
+     * Initializes the WiFi manager and creates the UI components.
+     * Does not perform an initial network scan to improve loading time.
      */
     WifiTab();
 
@@ -67,6 +67,14 @@ private:
      */
     void on_wifi_switch_toggled();
 
+    /**
+     * @brief Perform a delayed network scan
+     *
+     * Called after the tab is fully loaded and visible to the user.
+     * Delays the scan by a short time to ensure UI responsiveness.
+     */
+    void perform_delayed_scan();
+
     std::shared_ptr<WifiManager> manager_;  ///< WiFi manager for network operations
     Gtk::Box container_;                    ///< Container for network widgets
     Gtk::Button scan_button_;               ///< Button to trigger network scanning
@@ -74,6 +82,7 @@ private:
     Gtk::Label wifi_status_label_;          ///< Label showing WiFi status (Enabled/Disabled)
     Gtk::Image wifi_status_icon_;           ///< Icon showing WiFi status
     std::vector<std::unique_ptr<WifiNetworkWidget>> widgets_;  ///< List of network widgets
+    bool initial_scan_performed_ = false;   ///< Flag to track if initial scan has been done
 };
 
 } // namespace Wifi

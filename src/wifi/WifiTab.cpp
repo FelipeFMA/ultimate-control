@@ -14,8 +14,8 @@ namespace Wifi {
 /**
  * @brief Constructor for the WiFi tab
  *
- * Initializes the WiFi manager, creates the UI components,
- * and performs an initial network scan.
+ * Initializes the WiFi manager and creates the UI components.
+ * Does not perform an initial network scan to improve loading time.
  */
 WifiTab::WifiTab()
 : manager_(std::make_shared<WifiManager>()),  // Create WiFi manager
@@ -116,11 +116,18 @@ WifiTab::WifiTab()
     // Initialize UI based on current WiFi state
     update_wifi_state(manager_->is_wifi_enabled());
 
-    // Perform initial network scan
-    manager_->scan_networks();
+    // Show a loading message initially instead of scanning immediately
+    Gtk::Label* loading_label = Gtk::manage(new Gtk::Label("Loading networks..."));
+    loading_label->set_margin_top(20);
+    loading_label->set_margin_bottom(20);
+    container_.pack_start(*loading_label, Gtk::PACK_SHRINK);
 
     show_all_children();
     std::cout << "WiFi tab loaded!" << std::endl;
+
+    // Schedule a delayed scan after the tab is visible
+    Glib::signal_timeout().connect_once(
+        sigc::mem_fun(*this, &WifiTab::perform_delayed_scan), 100);
 }
 
 /**
@@ -201,6 +208,35 @@ void WifiTab::update_network_list(const std::vector<Network>& networks) {
     }
 
     show_all_children();
+}
+
+/**
+ * @brief Perform a delayed network scan
+ *
+ * Called after the tab is fully loaded and visible to the user.
+ * Delays the scan by a short time to ensure UI responsiveness.
+ */
+void WifiTab::perform_delayed_scan() {
+    if (initial_scan_performed_) {
+        return; // Prevent duplicate scans
+    }
+
+    initial_scan_performed_ = true;
+
+    if (manager_->is_wifi_enabled()) {
+        // Show scanning indicator
+        scan_button_.set_sensitive(false);
+        scan_button_.set_label("Scanning...");
+
+        // Perform the actual scan
+        manager_->scan_networks();
+
+        // Re-enable the scan button after a short delay
+        Glib::signal_timeout().connect_once([this]() {
+            scan_button_.set_sensitive(true);
+            scan_button_.set_label("Scan");
+        }, 2000);
+    }
 }
 
 } // namespace Wifi
