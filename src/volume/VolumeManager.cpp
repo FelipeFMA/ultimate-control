@@ -1,3 +1,12 @@
+/**
+ * @file VolumeManager.cpp
+ * @brief Implementation of the audio volume management functionality
+ *
+ * This file implements the VolumeManager class which provides an interface
+ * for controlling audio devices (sinks and sources) using PulseAudio.
+ * It uses the PIMPL idiom to hide implementation details.
+ */
+
 #include "VolumeManager.hpp"
 #include <iostream>
 #include <algorithm>
@@ -8,15 +17,36 @@
 
 namespace Volume {
 
+/**
+ * @class VolumeManager::Impl
+ * @brief Private implementation of the VolumeManager class
+ *
+ * This class implements the actual audio device management functionality using
+ * PulseAudio's command-line interface (pactl).
+ */
 class VolumeManager::Impl {
 public:
+    /**
+     * @brief Constructor for the implementation class
+     */
     Impl() = default;
+
+    /**
+     * @brief Destructor for the implementation class
+     */
     ~Impl() = default;
 
+    /**
+     * @brief Scan for available audio devices
+     *
+     * Uses pactl to scan for available audio sinks and sources.
+     * Populates the sinks_ vector with the results.
+     * Calls the update callback when finished if one is registered.
+     */
     void refresh_sinks() {
         sinks_.clear();
 
-        // Use pactl to list sinks
+        // Use pactl to list audio output devices (sinks)
         std::string cmd = "pactl list sinks short";
         std::array<char, 4096> buffer;
         std::string result;
@@ -31,7 +61,7 @@ public:
         }
         pclose(pipe);
 
-        // Parse output lines (sinks)
+        // Parse output lines to extract sink information
         size_t pos = 0;
         while ((pos = result.find('\n')) != std::string::npos) {
             std::string line = result.substr(0, pos);
@@ -42,7 +72,7 @@ public:
                 AudioSink sink;
                 sink.name = tokens[1];
 
-                // Query human-friendly description
+                // Query human-friendly description for better display
                 std::string desc_cmd = "pactl list sinks | grep -A10 'Name: " + sink.name + "' | grep 'Description:' | head -1 | cut -d':' -f2-";
                 std::array<char, 512> desc_buffer;
                 std::string desc_result;
@@ -53,7 +83,7 @@ public:
                     }
                     pclose(desc_pipe);
                 }
-                // Trim whitespace
+                // Trim whitespace from the description
                 desc_result.erase(0, desc_result.find_first_not_of(" \t\n\r"));
                 desc_result.erase(desc_result.find_last_not_of(" \t\n\r") + 1);
 
@@ -64,7 +94,7 @@ public:
             }
         }
 
-        // Use pactl to list sources (inputs)
+        // Use pactl to list audio input devices (sources)
         cmd = "pactl list sources short";
         result.clear();
 
@@ -113,6 +143,15 @@ public:
         }
     }
 
+    /**
+     * @brief Set the volume level for an audio device
+     * @param sink_name The name of the device to adjust
+     * @param volume The volume level to set (0-100)
+     *
+     * Sets the volume of the specified audio device. The volume is clamped
+     * to the range 0-100. Detects whether the device is a sink or source
+     * and uses the appropriate pactl command.
+     */
     void set_volume(const std::string& sink_name, int volume) {
         int vol = std::max(0, std::min(100, volume));
         std::string cmd;
@@ -125,9 +164,16 @@ public:
         if (ret != 0) {
             std::cerr << "Failed to set volume for " << sink_name << std::endl;
         }
-        // Do NOT refresh sinks immediately to avoid widget destruction during slider drag
+        // Note: We don't refresh sinks immediately to avoid widget destruction during slider drag
     }
 
+    /**
+     * @brief Toggle the mute state of an audio device
+     * @param sink_name The name of the device to toggle
+     *
+     * Toggles the mute state of the specified audio device. Detects whether
+     * the device is a sink or source and uses the appropriate pactl command.
+     */
     void toggle_mute(const std::string& sink_name) {
         std::string cmd;
         if (sink_name.find("input") != std::string::npos || sink_name.find("source") != std::string::npos) {
@@ -139,9 +185,13 @@ public:
         if (ret != 0) {
             std::cerr << "Failed to toggle mute for " << sink_name << std::endl;
         }
-        // Do NOT refresh sinks immediately to avoid widget destruction during toggle
+        // Note: We don't refresh sinks immediately to avoid widget destruction during toggle
     }
 
+    /**
+     * @brief Set the callback for device list updates
+     * @param cb The callback function to be called when the device list changes
+     */
     void set_update_callback(VolumeManager::SinkUpdateCallback cb) {
         update_callback_ = cb;
     }
@@ -150,6 +200,12 @@ private:
     std::vector<AudioSink> sinks_;
     VolumeManager::SinkUpdateCallback update_callback_;
 
+    /**
+     * @brief Split a string by a delimiter character
+     * @param s The string to split
+     * @param delimiter The character to split on
+     * @return A vector of substrings
+     */
     static std::vector<std::string> split(const std::string& s, char delimiter) {
         std::vector<std::string> tokens;
         std::string token;
@@ -165,6 +221,11 @@ private:
         return tokens;
     }
 
+    /**
+     * @brief Get the current volume level of an audio output device
+     * @param sink_name The name of the sink to query
+     * @return The volume level as a percentage (0-100)
+     */
     int get_sink_volume(const std::string& sink_name) {
         std::string cmd = "pactl get-sink-volume " + sink_name + " | grep -oP '\\d+%' | head -1";
         std::array<char, 128> buffer;
@@ -185,6 +246,11 @@ private:
         }
     }
 
+    /**
+     * @brief Get the current volume level of an audio input device
+     * @param source_name The name of the source to query
+     * @return The volume level as a percentage (0-100)
+     */
     int get_source_volume(const std::string& source_name) {
         std::string cmd = "pactl get-source-volume " + source_name + " | grep -oP '\\d+%' | head -1";
         std::array<char, 128> buffer;
@@ -205,6 +271,11 @@ private:
         }
     }
 
+    /**
+     * @brief Check if an audio input device is muted
+     * @param source_name The name of the source to query
+     * @return true if the source is muted, false otherwise
+     */
     bool is_source_muted(const std::string& source_name) {
         std::string cmd = "pactl get-source-mute " + source_name;
         std::array<char, 128> buffer;
@@ -220,6 +291,11 @@ private:
         return result.find("yes") != std::string::npos;
     }
 
+    /**
+     * @brief Check if an audio output device is muted
+     * @param sink_name The name of the sink to query
+     * @return true if the sink is muted, false otherwise
+     */
     bool is_sink_muted(const std::string& sink_name) {
         std::string cmd = "pactl get-sink-mute " + sink_name;
         std::array<char, 128> buffer;
@@ -236,22 +312,56 @@ private:
     }
 };
 
+/**
+ * @brief Constructor for VolumeManager
+ *
+ * Creates the implementation object using the PIMPL idiom.
+ */
 VolumeManager::VolumeManager() : impl_(std::make_unique<Impl>()) {}
 
+/**
+ * @brief Destructor for VolumeManager
+ *
+ * Default implementation is sufficient since impl_ is a unique_ptr.
+ */
 VolumeManager::~VolumeManager() = default;
 
+/**
+ * @brief Scan for available audio devices
+ *
+ * Delegates to the implementation class.
+ */
 void VolumeManager::refresh_sinks() {
     impl_->refresh_sinks();
 }
 
+/**
+ * @brief Set the volume level for an audio device
+ * @param sink_name The name of the device to adjust
+ * @param volume The volume level to set (0-100)
+ *
+ * Delegates to the implementation class.
+ */
 void VolumeManager::set_volume(const std::string& sink_name, int volume) {
     impl_->set_volume(sink_name, volume);
 }
 
+/**
+ * @brief Toggle the mute state of an audio device
+ * @param sink_name The name of the device to toggle
+ *
+ * Delegates to the implementation class.
+ */
 void VolumeManager::toggle_mute(const std::string& sink_name) {
     impl_->toggle_mute(sink_name);
 }
 
+/**
+ * @brief Set the callback for device list updates
+ * @param cb The callback function to be called when the device list changes
+ *
+ * Delegates to the implementation class.
+ */
 void VolumeManager::set_update_callback(SinkUpdateCallback cb) {
     impl_->set_update_callback(cb);
 }

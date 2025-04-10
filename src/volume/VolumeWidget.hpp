@@ -1,3 +1,11 @@
+/**
+ * @file VolumeWidget.hpp
+ * @brief Widget for displaying and controlling an audio device
+ *
+ * This file defines the VolumeWidget class which displays a single
+ * audio device with volume slider and mute button controls.
+ */
+
 #ifndef ULTIMATE_CONTROL_VOLUME_WIDGET_HPP
 #define ULTIMATE_CONTROL_VOLUME_WIDGET_HPP
 
@@ -7,27 +15,67 @@
 
 namespace Volume {
 
+/**
+ * @class VolumeWidget
+ * @brief Widget for displaying and controlling an audio device
+ *
+ * Displays information about an audio device including its name and type.
+ * Provides a volume slider and mute button for controlling the device.
+ * Updates icons based on volume level and mute state.
+ */
 class VolumeWidget : public Gtk::Box {
 public:
+    /**
+     * @brief Constructor for the volume widget
+     * @param sink The audio device to display
+     * @param manager Shared pointer to the volume manager
+     *
+     * Creates a widget that displays information about an audio device and
+     * provides controls for adjusting its volume and mute state.
+     */
     VolumeWidget(const AudioSink& sink, std::shared_ptr<VolumeManager> manager);
+
+    /**
+     * @brief Virtual destructor
+     */
     virtual ~VolumeWidget();
 
 private:
+    /**
+     * @brief Handler for volume slider changes
+     *
+     * Updates the device volume and icon when the slider is moved.
+     */
     void on_volume_changed();
+
+    /**
+     * @brief Handler for mute button toggles
+     *
+     * Toggles the device mute state and updates the icon.
+     */
     void on_mute_toggled();
+
+    /**
+     * @brief Update the volume icon based on level and mute state
+     * @param volume The current volume level (0-100)
+     * @param muted Whether the device is muted
+     *
+     * Sets appropriate icons for both the volume indicator and mute button
+     * based on the current volume level and mute state.
+     */
     void update_volume_icon(int volume, bool muted);
 
-    std::shared_ptr<VolumeManager> manager_;
-    std::string sink_name_;
-    bool is_input_device_;
+    std::shared_ptr<VolumeManager> manager_;  ///< Volume manager for audio operations
+    std::string sink_name_;                   ///< Name of the audio device
+    bool is_input_device_;                    ///< Whether this is an input device (mic) or output (speaker)
 
-    Gtk::Box device_box_;
-    Gtk::Box control_box_;
-    Gtk::Image device_icon_;
-    Gtk::Label label_;
-    Gtk::Scale volume_scale_;
-    Gtk::Image volume_icon_;
-    Gtk::ToggleButton mute_button_;
+    Gtk::Box device_box_;       ///< Container for device icon and name
+    Gtk::Box control_box_;      ///< Container for volume controls
+    Gtk::Image device_icon_;    ///< Icon showing device type (speaker/mic)
+    Gtk::Label label_;          ///< Label showing device name
+    Gtk::Scale volume_scale_;   ///< Slider for volume control
+    Gtk::Image volume_icon_;    ///< Icon showing current volume level
+    Gtk::ToggleButton mute_button_;  ///< Button to toggle mute state
 };
 
 } // namespace Volume
