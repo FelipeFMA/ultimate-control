@@ -1,32 +1,46 @@
+/**
+ * @file PowerTab.cpp
+ * @brief Implementation of the power management tab
+ *
+ * This file implements the PowerTab class which provides a user interface
+ * for system power operations like shutdown, reboot, suspend, and hibernate,
+ * as well as power profile management.
+ */
+
 #include "PowerTab.hpp"
 #include <iostream>
 
 namespace Power {
 
+/**
+ * @brief Constructor for the power tab
+ *
+ * Initializes the power manager and creates the UI components.
+ */
 PowerTab::PowerTab()
-: manager_(std::make_shared<PowerManager>()),
-  main_box_(Gtk::ORIENTATION_VERTICAL, 15)
+: manager_(std::make_shared<PowerManager>()),      // Initialize power manager
+  main_box_(Gtk::ORIENTATION_VERTICAL, 15)         // Main container with 15px spacing
 {
-    // Set up the main container
+    // Set up the main container orientation
     set_orientation(Gtk::ORIENTATION_VERTICAL);
 
-    // Add a scrolled window
+    // Add a scrolled window to contain all sections
     scrolled_window_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     pack_start(scrolled_window_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Set up the main box inside the scrolled window
+    // Set up the main box inside the scrolled window with margins
     main_box_.set_margin_start(20);
     main_box_.set_margin_end(20);
     main_box_.set_margin_top(20);
     main_box_.set_margin_bottom(20);
     scrolled_window_.add(main_box_);
 
-    // Create the different sections
+    // Create the three main sections of the power tab
     create_system_section();
     create_session_section();
     create_power_profiles_section();
 
-    // Add frames to the main box
+    // Add all section frames to the main box
     main_box_.pack_start(system_frame_, Gtk::PACK_SHRINK);
     main_box_.pack_start(session_frame_, Gtk::PACK_SHRINK);
     main_box_.pack_start(profiles_frame_, Gtk::PACK_SHRINK);
@@ -35,10 +49,19 @@ PowerTab::PowerTab()
     std::cout << "Power tab loaded!" << std::endl;
 }
 
+/**
+ * @brief Destructor for the power tab
+ */
 PowerTab::~PowerTab() = default;
 
+/**
+ * @brief Create the system power section
+ *
+ * Creates the UI components for system power operations
+ * (shutdown and reboot).
+ */
 void PowerTab::create_system_section() {
-    // Set up the system section frame
+    // Configure the frame and container for the system power section
     system_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     system_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
     system_box_.set_spacing(10);
@@ -47,7 +70,7 @@ void PowerTab::create_system_section() {
     system_box_.set_margin_top(15);
     system_box_.set_margin_bottom(15);
 
-    // Set up the system header
+    // Configure the header for the system power section
     system_header_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     system_header_box_.set_spacing(10);
 
@@ -59,15 +82,15 @@ void PowerTab::create_system_section() {
     system_header_box_.pack_start(system_icon_, Gtk::PACK_SHRINK);
     system_header_box_.pack_start(system_label_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Add settings button to the header
+    // Add settings button to the header for configuring power commands
     add_settings_button_to_header(system_header_box_);
 
-    // Set up the system buttons
+    // Configure the container for system power buttons
     system_buttons_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     system_buttons_box_.set_spacing(15);
     system_buttons_box_.set_homogeneous(true);
 
-    // Configure shutdown button
+    // Configure the shutdown button with icon and click handler
     shutdown_button_.set_label("Shutdown");
     shutdown_button_.set_image_from_icon_name("system-shutdown-symbolic", Gtk::ICON_SIZE_BUTTON);
     shutdown_button_.set_always_show_image(true);
@@ -76,7 +99,7 @@ void PowerTab::create_system_section() {
         manager_->shutdown();
     });
 
-    // Configure reboot button
+    // Configure the reboot button with icon and click handler
     reboot_button_.set_label("Reboot");
     reboot_button_.set_image_from_icon_name("system-reboot-symbolic", Gtk::ICON_SIZE_BUTTON);
     reboot_button_.set_always_show_image(true);
@@ -85,20 +108,26 @@ void PowerTab::create_system_section() {
         manager_->reboot();
     });
 
-    // Add buttons to the box
+    // Add both buttons to the buttons container
     system_buttons_box_.pack_start(shutdown_button_, Gtk::PACK_EXPAND_WIDGET);
     system_buttons_box_.pack_start(reboot_button_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Add components to the system box
+    // Assemble the system section components
     system_box_.pack_start(system_header_box_, Gtk::PACK_SHRINK);
     system_box_.pack_start(system_buttons_box_, Gtk::PACK_SHRINK);
 
-    // Add the system box to the frame
+    // Add the assembled system box to the frame
     system_frame_.add(system_box_);
 }
 
+/**
+ * @brief Create the session actions section
+ *
+ * Creates the UI components for session actions
+ * (suspend, hibernate, and lock screen).
+ */
 void PowerTab::create_session_section() {
-    // Set up the session section frame
+    // Configure the frame and container for the session section
     session_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     session_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
     session_box_.set_spacing(10);
@@ -107,7 +136,7 @@ void PowerTab::create_session_section() {
     session_box_.set_margin_top(15);
     session_box_.set_margin_bottom(15);
 
-    // Set up the session header
+    // Configure the header for the session section
     session_header_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     session_header_box_.set_spacing(10);
 
@@ -119,12 +148,12 @@ void PowerTab::create_session_section() {
     session_header_box_.pack_start(session_icon_, Gtk::PACK_SHRINK);
     session_header_box_.pack_start(session_label_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Set up the session buttons
+    // Configure the container for session action buttons
     session_buttons_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     session_buttons_box_.set_spacing(15);
     session_buttons_box_.set_homogeneous(true);
 
-    // Configure suspend button
+    // Configure the suspend button with icon and click handler
     suspend_button_.set_label("Suspend");
     suspend_button_.set_image_from_icon_name("system-suspend-symbolic", Gtk::ICON_SIZE_BUTTON);
     suspend_button_.set_always_show_image(true);
@@ -133,7 +162,7 @@ void PowerTab::create_session_section() {
         manager_->suspend();
     });
 
-    // Configure hibernate button
+    // Configure the hibernate button with icon and click handler
     hibernate_button_.set_label("Hibernate");
     hibernate_button_.set_image_from_icon_name("system-hibernate-symbolic", Gtk::ICON_SIZE_BUTTON);
     hibernate_button_.set_always_show_image(true);
@@ -142,7 +171,7 @@ void PowerTab::create_session_section() {
         manager_->hibernate();
     });
 
-    // Configure lock button
+    // Configure the lock screen button with icon and click handler
     lock_button_.set_label("Lock Screen");
     lock_button_.set_image_from_icon_name("system-lock-screen-symbolic", Gtk::ICON_SIZE_BUTTON);
     lock_button_.set_always_show_image(true);
@@ -151,21 +180,26 @@ void PowerTab::create_session_section() {
         std::system(manager_->get_settings()->get_command("lock").c_str());
     });
 
-    // Add buttons to the box
+    // Add all three buttons to the buttons container
     session_buttons_box_.pack_start(suspend_button_, Gtk::PACK_EXPAND_WIDGET);
     session_buttons_box_.pack_start(hibernate_button_, Gtk::PACK_EXPAND_WIDGET);
     session_buttons_box_.pack_start(lock_button_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Add components to the session box
+    // Assemble the session section components
     session_box_.pack_start(session_header_box_, Gtk::PACK_SHRINK);
     session_box_.pack_start(session_buttons_box_, Gtk::PACK_SHRINK);
 
-    // Add the session box to the frame
+    // Add the assembled session box to the frame
     session_frame_.add(session_box_);
 }
 
+/**
+ * @brief Create the power profiles section
+ *
+ * Creates the UI components for power profile management.
+ */
 void PowerTab::create_power_profiles_section() {
-    // Set up the profiles section frame
+    // Configure the frame and container for the power profiles section
     profiles_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     profiles_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
     profiles_box_.set_spacing(10);
@@ -174,7 +208,7 @@ void PowerTab::create_power_profiles_section() {
     profiles_box_.set_margin_top(15);
     profiles_box_.set_margin_bottom(15);
 
-    // Set up the profiles header
+    // Configure the header for the power profiles section
     profiles_header_box_.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     profiles_header_box_.set_spacing(10);
 
@@ -186,27 +220,27 @@ void PowerTab::create_power_profiles_section() {
     profiles_header_box_.pack_start(profiles_icon_, Gtk::PACK_SHRINK);
     profiles_header_box_.pack_start(profiles_label_, Gtk::PACK_EXPAND_WIDGET);
 
-    // Set up the profiles content
+    // Configure the container for power profiles content
     profiles_content_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
     profiles_content_box_.set_spacing(10);
 
-    // Add description label
+    // Add descriptive text explaining power profiles
     Gtk::Label* description = Gtk::manage(new Gtk::Label());
     description->set_markup("Select a power profile to optimize battery life and performance:");
     description->set_halign(Gtk::ALIGN_START);
     profiles_content_box_.pack_start(*description, Gtk::PACK_SHRINK);
 
-    // Set up the profile combo box
+    // Configure the dropdown for selecting power profiles
     profile_combo_.set_hexpand(true);
 
-    // Get available power profiles
+    // Populate the dropdown with available power profiles
     auto profiles = manager_->list_power_profiles();
     profile_combo_.remove_all();
     for (const auto& profile : profiles) {
         profile_combo_.append(profile);
     }
 
-    // Set the active profile
+    // Set the currently active profile in the dropdown
     if (!profiles.empty()) {
         profile_combo_.set_sensitive(true);
 
@@ -226,7 +260,7 @@ void PowerTab::create_power_profiles_section() {
         profile_combo_.set_sensitive(false);
     }
 
-    // Connect the signal
+    // Connect the change signal to update the power profile
     profile_combo_.signal_changed().connect([this]() {
         auto selected = profile_combo_.get_active_text();
         if (!selected.empty()) {
@@ -234,46 +268,58 @@ void PowerTab::create_power_profiles_section() {
         }
     });
 
-    // Add the combo box to the content box
+    // Add the dropdown to the content container
     profiles_content_box_.pack_start(profile_combo_, Gtk::PACK_SHRINK);
 
-    // Add components to the profiles box
+    // Assemble the power profiles section components
     profiles_box_.pack_start(profiles_header_box_, Gtk::PACK_SHRINK);
     profiles_box_.pack_start(profiles_content_box_, Gtk::PACK_SHRINK);
 
-    // Add the profiles box to the frame
+    // Add the assembled profiles box to the frame
     profiles_frame_.add(profiles_box_);
 }
 
+/**
+ * @brief Add a settings button to a section header
+ * @param header_box The header box to add the button to
+ *
+ * Adds a settings button with a cog icon to a section header.
+ * When clicked, the button opens the power settings dialog.
+ */
 void PowerTab::add_settings_button_to_header(Gtk::Box& header_box) {
-    // Create a settings button with a cog icon
+    // Create a button with no relief (flat appearance)
     auto settings_button = Gtk::make_managed<Gtk::Button>();
     settings_button->set_relief(Gtk::RELIEF_NONE);
     settings_button->set_tooltip_text("Configure power commands");
 
-    // Add a cog icon to the button
+    // Add a settings/cog icon to the button
     auto settings_icon = Gtk::make_managed<Gtk::Image>();
     settings_icon->set_from_icon_name("emblem-system-symbolic", Gtk::ICON_SIZE_BUTTON);
     settings_button->set_image(*settings_icon);
 
-    // Connect the button click signal
+    // Connect the button click to open settings dialog
     settings_button->signal_clicked().connect(sigc::mem_fun(*this, &PowerTab::on_settings_clicked));
 
-    // Add the button to the header box
+    // Add the button to the right side of the header
     header_box.pack_end(*settings_button, Gtk::PACK_SHRINK);
 }
 
+/**
+ * @brief Handler for settings button clicks
+ *
+ * Opens the power settings dialog to configure power commands.
+ */
 void PowerTab::on_settings_clicked() {
-    // Get the toplevel window
+    // Get the parent window for the dialog
     Gtk::Window* parent = dynamic_cast<Gtk::Window*>(get_toplevel());
     if (!parent) return;
 
-    // Create and show the settings dialog
+    // Create and show the power settings dialog
     PowerSettingsDialog dialog(*parent, manager_->get_settings());
     int result = dialog.run();
 
     if (result == Gtk::RESPONSE_OK) {
-        // Save the settings
+        // Save the settings if OK was clicked
         dialog.save_settings();
     }
 }

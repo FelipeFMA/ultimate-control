@@ -1,34 +1,95 @@
+/**
+ * @file PowerSettings.hpp
+ * @brief Power settings management for Ultimate Control
+ *
+ * This file defines the PowerSettings class which provides functionality
+ * for loading, saving, and accessing power-related settings such as
+ * commands for shutdown, reboot, suspend, etc.
+ */
+
 #ifndef ULTIMATE_CONTROL_POWER_SETTINGS_HPP
 #define ULTIMATE_CONTROL_POWER_SETTINGS_HPP
 
 #include <string>
 #include <map>
 
+/**
+ * @namespace Power
+ * @brief Contains power management functionality
+ */
 namespace Power {
 
+/**
+ * @class PowerSettings
+ * @brief Manages power-related settings
+ *
+ * Provides functionality for loading, saving, and accessing power-related
+ * settings such as commands for shutdown, reboot, suspend, etc.
+ * Settings are persisted to a configuration file.
+ */
 class PowerSettings {
 public:
+    /**
+     * @brief Constructor
+     *
+     * Initializes default power commands and loads any existing settings
+     * from the configuration file.
+     */
     PowerSettings();
+
+    /**
+     * @brief Destructor
+     *
+     * Saves settings to the configuration file before destruction.
+     */
     ~PowerSettings();
 
-    // Get command for a specific action
+    /**
+     * @brief Get the command for a specific power action
+     * @param action The action name (e.g., "shutdown", "reboot")
+     * @return The command string for the specified action
+     *
+     * Returns the configured command for the specified power action.
+     * If no command is configured for the action, returns a default command.
+     */
     std::string get_command(const std::string& action) const;
 
-    // Set command for a specific action
+    /**
+     * @brief Set the command for a specific power action
+     * @param action The action name (e.g., "shutdown", "reboot")
+     * @param command The command string to execute for the action
+     *
+     * Sets the command to be executed for the specified power action.
+     */
     void set_command(const std::string& action, const std::string& command);
 
-    // Load settings from file
+    /**
+     * @brief Load settings from the configuration file
+     *
+     * Reads power settings from the configuration file. If the file
+     * doesn't exist or can't be read, default settings are used.
+     */
     void load();
 
-    // Save settings to file
+    /**
+     * @brief Save settings to the configuration file
+     *
+     * Writes the current power settings to the configuration file.
+     * Creates the configuration directory if it doesn't exist.
+     */
     void save() const;
 
 private:
-    // Create config directory if it doesn't exist
+    /**
+     * @brief Create the configuration directory if it doesn't exist
+     *
+     * Creates all directories in the path to the configuration file
+     * if they don't already exist.
+     */
     void ensure_config_dir() const;
 
-    std::string config_path_;
-    std::map<std::string, std::string> commands_;
+    std::string config_path_;                      ///< Path to the configuration file
+    std::map<std::string, std::string> commands_;   ///< Map of action names to command strings
 };
 
 } // namespace Power
