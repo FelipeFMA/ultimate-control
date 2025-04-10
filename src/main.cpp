@@ -4,9 +4,7 @@
 #include <map>
 #include <cstdlib>
 #include <string>
-#include <thread>
 #include <mutex>
-#include <atomic>
 #include <glibmm/optioncontext.h>
 #include <glibmm/optiongroup.h>
 #include <glibmm/optionentry.h>
