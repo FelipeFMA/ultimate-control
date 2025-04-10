@@ -86,6 +86,14 @@ void SettingsTab::create_general_settings_section() {
     general_settings_frame_.set_shadow_type(Gtk::SHADOW_ETCHED_IN);
     general_settings_frame_.set_margin_bottom(20);
 
+    // Configure the general settings box with margins (same as tab settings)
+    general_settings_box_.set_orientation(Gtk::ORIENTATION_VERTICAL);
+    general_settings_box_.set_spacing(10);
+    general_settings_box_.set_margin_start(15);
+    general_settings_box_.set_margin_end(15);
+    general_settings_box_.set_margin_top(15);
+    general_settings_box_.set_margin_bottom(15);
+
     // Add settings icon and title label to the header
     general_icon_.set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_DIALOG);
     general_label_.set_markup("<span size='large'><b>General Settings</b></span>");
