@@ -42,24 +42,11 @@ Ultimate Control is a GTK-based application that provides a unified interface fo
 - Customizable power commands
 
 ## 📸 Screenshots
+![image](https://github.com/user-attachments/assets/d4bc3af1-eb4f-4fd4-a6af-0aee367b9cdc)
 
-<p align="center">
-  <em>Volume Control Tab</em><br>
-  <!-- Screenshot placeholder -->
-  <img src="https://via.placeholder.com/800x450.png?text=Volume+Tab+Screenshot" alt="Volume Tab Screenshot">
-</p>
+![image](https://github.com/user-attachments/assets/bb3e9978-d475-42f5-8416-dea770b52364)
 
-<p align="center">
-  <em>WiFi Management Tab</em><br>
-  <!-- Screenshot placeholder -->
-  <img src="https://via.placeholder.com/800x450.png?text=WiFi+Tab+Screenshot" alt="WiFi Tab Screenshot">
-</p>
-
-<p align="center">
-  <em>Power Management Tab</em><br>
-  <!-- Screenshot placeholder -->
-  <img src="https://via.placeholder.com/800x450.png?text=Power+Tab+Screenshot" alt="Power Tab Screenshot">
-</p>
+![image](https://github.com/user-attachments/assets/1a0de0c7-98ee-482b-947d-cdeb7410e946)
 
 ## 📥 Installation
 
