@@ -21,7 +21,7 @@
 #include "wifi/WifiTab.hpp"
 #include "display/DisplayTab.hpp"
 #include "power/PowerTab.hpp"
-#include "settings/SettingsTab.hpp"
+#include "settings/SettingsWindow.hpp"
 #include "settings/TabSettings.hpp"
 #include "core/Settings.hpp"
 
@@ -86,10 +86,8 @@ better_control.py     * @param floating_mode Whether to make the window float on
         // Create tab placeholders
         create_tabs();
 
-        // Create and add settings tab placeholder
-        auto settings_placeholder = Gtk::make_managed<Gtk::Box>();
-        settings_placeholder->set_size_request(100, 100);
-        add_tab("settings", settings_placeholder, "preferences-system-symbolic", "Settings");
+        // Create settings button on the right side of the notebook
+        create_settings_button();
 
         // Handle window close event with quick exit to avoid hanging
         signal_delete_event().connect([](GdkEventAny* event) -> bool {
@@ -143,6 +141,44 @@ better_control.py     * @param floating_mode Whether to make the window float on
         }
     }
 
+    /**
+     * @brief Create a settings button on the right side of the notebook
+     *
+     * Creates a button that opens the settings window when clicked.
+     */
+    void create_settings_button() {
+        // Create a settings button with an icon
+        auto settings_button = Gtk::make_managed<Gtk::Button>();
+        settings_button->set_image_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_MENU);
+        settings_button->set_tooltip_text("Settings");
+        settings_button->set_relief(Gtk::RELIEF_NONE);
+
+        // Create a box to hold the button
+        auto button_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL);
+        button_box->pack_start(*settings_button, Gtk::PACK_SHRINK);
+        button_box->set_margin_end(5);
+
+        // Add the button box to the right side of the notebook
+        notebook_.set_action_widget(button_box, Gtk::PACK_END);
+        button_box->show_all();
+
+        // Connect the button click signal to open the settings window
+        settings_button->signal_clicked().connect([this]() {
+            // Create a settings window if it doesn't exist yet
+            if (!settings_window_) {
+                settings_window_ = std::make_unique<Settings::SettingsWindow>();
+                settings_window_->set_settings_changed_callback([this]() {
+                    // Restart the application when settings change
+                    std::cout << "Settings changed, restart required" << std::endl;
+                    std::quick_exit(42); // Exit with a special code to indicate restart
+                });
+            }
+
+            // Show the settings window
+            settings_window_->present();
+        });
+    }
+
 private:
     /**
      * @brief Create all tabs according to settings
@@ -165,10 +201,6 @@ private:
             tab_settings_->set_tab_enabled(initial_tab_, true);
         }
         for (const auto& tab_id : tab_order) {
-            if (tab_id == "settings") {
-                continue; // Settings tab is added separately
-            }
-
             if (!tab_settings_->is_tab_enabled(tab_id)) {
                 continue; // Skip disabled tabs
             }
@@ -238,6 +270,7 @@ private:
      *
      * Implements lazy loading by detecting when a tab is selected
      * and loading its content if it hasn't been loaded yet.
+     * Also prevents switching to the separator tab.
      */
     void on_tab_switch(Gtk::Widget* page, guint page_num) {
         // Guard against recursive calls that can happen during tab loading
@@ -366,9 +399,6 @@ private:
         } else if (id == "power") {
             icon_name = "system-shutdown-symbolic";
             label_text = "Power";
-        } else if (id == "settings") {
-            icon_name = "preferences-system-symbolic";
-            label_text = "Settings";
         } else {
             // Unknown tab
             tab_widgets_[id].loading = false;
@@ -467,16 +497,6 @@ private:
                 content = Gtk::make_managed<Power::PowerTab>();
                 icon_name = "system-shutdown-symbolic";
                 label_text = "Power";
-            } else if (id == "settings") {
-                auto settings_tab = Gtk::make_managed<Settings::SettingsTab>();
-                settings_tab->set_settings_changed_callback([this]() {
-                    // This callback is kept for compatibility
-                    // The app now restarts when settings change instead of updating in-place
-                    std::cout << "Settings changed, restart required" << std::endl;
-                });
-                content = settings_tab;
-                icon_name = "preferences-system-symbolic";
-                label_text = "Settings";
             } else {
                 // Unknown tab
                 std::lock_guard<std::mutex> lock(tab_mutex_);
@@ -565,6 +585,8 @@ private:
     std::map<std::string, Glib::Dispatcher> tab_loaded_dispatchers_;
     std::map<std::string, std::string> tab_load_errors_;
 
+    // Settings window
+    std::unique_ptr<Settings::SettingsWindow> settings_window_;
 };
 
 /**

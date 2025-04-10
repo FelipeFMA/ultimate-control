@@ -21,6 +21,3 @@ ultimate-control
 # Ignore OS files
 .DS_Store
 Thumbs.db
-
-# Ignore VSCode settings
-.vscode/
