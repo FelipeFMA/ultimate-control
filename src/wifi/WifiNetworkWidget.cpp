@@ -237,122 +237,127 @@ namespace Wifi
             // Determine security type based on network properties
             std::string security_type = network_.secured ? "wpa-psk" : "";
 
+            // Disable the connect button and show a spinner while connecting
+            connect_button_.set_sensitive(false);
+            connect_button_.set_label("Connecting...");
+
+            // Create a spinner to show while connecting
+            Gtk::Spinner *spinner = Gtk::manage(new Gtk::Spinner());
+            spinner->start();
+            connect_button_.set_image(*spinner);
+            connect_button_.show_all_children();
+
             // First try to connect with empty password - this will use saved credentials if available
             std::cout << "Trying to connect to " << target_ssid << " using saved credentials..." << std::endl;
-            manager_->connect(target_ssid, "", security_type);
 
-            // Wait briefly for the connection to establish
-            Glib::usleep(1000000); // 1 second
+            // Connect asynchronously to avoid freezing the UI
+            manager_->connect_async(target_ssid, "", security_type,
+                                    [this, target_ssid, security_type, spinner](bool success, const std::string &ssid)
+                                    {
+                                        // This callback runs in the main thread
 
-            // Refresh network list and check if we're now connected to this network
-            manager_->scan_networks();
-            bool connected = false;
-            for (const auto &net : manager_->get_networks())
-            {
-                if (net.ssid == target_ssid && net.connected)
-                {
-                    connected = true;
-                    break;
-                }
-            }
+                                        // Restore the connect button
+                                        connect_button_.set_sensitive(true);
+                                        connect_button_.set_label("Connect");
+                                        connect_button_.set_image_from_icon_name("network-wireless-signal-excellent-symbolic", Gtk::ICON_SIZE_BUTTON);
 
-            if (connected)
-            {
-                // Show a success message dialog
-                Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
-                                                  "Successfully connected to " + target_ssid,
-                                                  false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
-                success_dialog.set_secondary_text("Connected using saved credentials");
-                success_dialog.run();
-                return;
-            }
+                                        if (success)
+                                        {
+                                            // Show a success message dialog
+                                            Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
+                                                                              "Successfully connected to " + target_ssid,
+                                                                              false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+                                            success_dialog.set_secondary_text("Connected using saved credentials");
+                                            success_dialog.run();
+                                        }
+                                        else if (network_.secured)
+                                        {
+                                            // If connection with saved credentials failed and it's a secured network, ask for password
+                                            // Create a modal dialog for password entry with appropriate styling
+                                            Gtk::Dialog dialog("Enter WiFi Password", *dynamic_cast<Gtk::Window *>(get_toplevel()), true);
+                                            dialog.set_default_size(300, -1);
+                                            dialog.set_border_width(10);
 
-            // If connection with saved credentials failed and it's a secured network, ask for password
-            if (network_.secured)
-            {
-                // Create a modal dialog for password entry with appropriate styling
-                Gtk::Dialog dialog("Enter WiFi Password", *dynamic_cast<Gtk::Window *>(get_toplevel()), true);
-                dialog.set_default_size(300, -1);
-                dialog.set_border_width(10);
+                                            // Create a horizontal box with a lock icon for the dialog
+                                            Gtk::Box *content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 10));
+                                            Gtk::Image *lock_icon = Gtk::manage(new Gtk::Image());
+                                            lock_icon->set_from_icon_name("channel-secure-symbolic", Gtk::ICON_SIZE_DIALOG);
+                                            content_box->pack_start(*lock_icon, Gtk::PACK_SHRINK);
 
-                // Create a horizontal box with a lock icon for the dialog
-                Gtk::Box *content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 10));
-                Gtk::Image *lock_icon = Gtk::manage(new Gtk::Image());
-                lock_icon->set_from_icon_name("channel-secure-symbolic", Gtk::ICON_SIZE_DIALOG);
-                content_box->pack_start(*lock_icon, Gtk::PACK_SHRINK);
+                                            // Create a vertical box for the network name label and password entry field
+                                            Gtk::Box *entry_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 10));
 
-                // Create a vertical box for the network name label and password entry field
-                Gtk::Box *entry_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 10));
+                                            // Add network name label with bold formatting
+                                            Gtk::Label *network_label = Gtk::manage(new Gtk::Label());
+                                            network_label->set_markup("<b>" + target_ssid + "</b>");
+                                            network_label->set_halign(Gtk::ALIGN_START);
+                                            entry_box->pack_start(*network_label, Gtk::PACK_SHRINK);
 
-                // Add network name label with bold formatting
-                Gtk::Label *network_label = Gtk::manage(new Gtk::Label());
-                network_label->set_markup("<b>" + target_ssid + "</b>");
-                network_label->set_halign(Gtk::ALIGN_START);
-                entry_box->pack_start(*network_label, Gtk::PACK_SHRINK);
+                                            // Add password label and masked entry field
+                                            Gtk::Label *password_label = Gtk::manage(new Gtk::Label("Password:"));
+                                            password_label->set_halign(Gtk::ALIGN_START);
+                                            entry_box->pack_start(*password_label, Gtk::PACK_SHRINK);
 
-                // Add password label and masked entry field
-                Gtk::Label *password_label = Gtk::manage(new Gtk::Label("Password:"));
-                password_label->set_halign(Gtk::ALIGN_START);
-                entry_box->pack_start(*password_label, Gtk::PACK_SHRINK);
+                                            Gtk::Entry *entry = Gtk::manage(new Gtk::Entry());
+                                            entry->set_visibility(false);
+                                            entry->set_invisible_char('*');
+                                            entry->set_activates_default(true);
+                                            entry_box->pack_start(*entry, Gtk::PACK_SHRINK);
 
-                Gtk::Entry *entry = Gtk::manage(new Gtk::Entry());
-                entry->set_visibility(false);
-                entry->set_invisible_char('*');
-                entry->set_activates_default(true);
-                entry_box->pack_start(*entry, Gtk::PACK_SHRINK);
+                                            content_box->pack_start(*entry_box, Gtk::PACK_EXPAND_WIDGET);
 
-                content_box->pack_start(*entry_box, Gtk::PACK_EXPAND_WIDGET);
+                                            dialog.get_content_area()->pack_start(*content_box, Gtk::PACK_EXPAND_WIDGET);
+                                            dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
+                                            dialog.add_button("Connect", Gtk::RESPONSE_OK);
+                                            dialog.set_default_response(Gtk::RESPONSE_OK);
 
-                dialog.get_content_area()->pack_start(*content_box, Gtk::PACK_EXPAND_WIDGET);
-                dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
-                dialog.add_button("Connect", Gtk::RESPONSE_OK);
-                dialog.set_default_response(Gtk::RESPONSE_OK);
+                                            dialog.show_all_children();
 
-                dialog.show_all_children();
+                                            int result = dialog.run();
+                                            if (result == Gtk::RESPONSE_OK)
+                                            {
+                                                std::string password = entry->get_text();
 
-                int result = dialog.run();
-                if (result == Gtk::RESPONSE_OK)
-                {
-                    std::string password = entry->get_text();
+                                                // Log connection attempt
+                                                std::cout << "Connecting to " << target_ssid << " with password..." << std::endl;
 
-                    // Log connection attempt
-                    std::cout << "Connecting to " << target_ssid << " with password..." << std::endl;
+                                                // Disable the connect button and show a spinner while connecting
+                                                connect_button_.set_sensitive(false);
+                                                connect_button_.set_label("Connecting...");
 
-                    // Connect with the provided password
-                    manager_->connect(target_ssid, password, security_type);
+                                                Gtk::Spinner *spinner = Gtk::manage(new Gtk::Spinner());
+                                                spinner->start();
+                                                connect_button_.set_image(*spinner);
+                                                connect_button_.show_all_children();
 
-                    // Wait briefly for the connection to establish
-                    Glib::usleep(1000000); // 1 second
+                                                // Connect asynchronously with the provided password
+                                                manager_->connect_async(target_ssid, password, security_type,
+                                                                        [this, target_ssid](bool success, const std::string &ssid)
+                                                                        {
+                                                                            // Restore the connect button
+                                                                            connect_button_.set_sensitive(true);
+                                                                            connect_button_.set_label("Connect");
+                                                                            connect_button_.set_image_from_icon_name("network-wireless-signal-excellent-symbolic", Gtk::ICON_SIZE_BUTTON);
 
-                    // Refresh network list and check if connection was successful
-                    manager_->scan_networks();
-                    bool connected = false;
-                    for (const auto &net : manager_->get_networks())
-                    {
-                        if (net.ssid == target_ssid && net.connected)
-                        {
-                            connected = true;
-                            break;
-                        }
-                    }
-
-                    if (connected)
-                    {
-                        Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
-                                                          "Successfully connected to " + target_ssid,
-                                                          false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
-                        success_dialog.run();
-                    }
-                    else
-                    {
-                        Gtk::MessageDialog error_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
-                                                        "Failed to connect to " + target_ssid,
-                                                        false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
-                        error_dialog.set_secondary_text("Please check your password and try again.");
-                        error_dialog.run();
-                    }
-                }
-            }
+                                                                            if (success)
+                                                                            {
+                                                                                Gtk::MessageDialog success_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
+                                                                                                                  "Successfully connected to " + target_ssid,
+                                                                                                                  false, Gtk::MESSAGE_INFO, Gtk::BUTTONS_OK, true);
+                                                                                success_dialog.run();
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                Gtk::MessageDialog error_dialog(*dynamic_cast<Gtk::Window *>(get_toplevel()),
+                                                                                                                "Failed to connect to " + target_ssid,
+                                                                                                                false, Gtk::MESSAGE_ERROR, Gtk::BUTTONS_OK, true);
+                                                                                error_dialog.set_secondary_text("Please check your password and try again.");
+                                                                                error_dialog.run();
+                                                                            }
+                                                                        });
+                                            }
+                                        }
+                                    });
         }
     }
 

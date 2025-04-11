@@ -48,9 +48,10 @@ namespace Wifi
     class WifiManager
     {
     public:
-        using NetworkList = std::vector<Network>;                        ///< Type alias for a list of WiFi networks
-        using UpdateCallback = std::function<void(const NetworkList &)>; ///< Callback type for network list updates
-        using StateCallback = std::function<void(bool)>;                 ///< Callback type for WiFi enabled/disabled state changes
+        using NetworkList = std::vector<Network>;                                  ///< Type alias for a list of WiFi networks
+        using UpdateCallback = std::function<void(const NetworkList &)>;           ///< Callback type for network list updates
+        using StateCallback = std::function<void(bool)>;                           ///< Callback type for WiFi enabled/disabled state changes
+        using ConnectionCallback = std::function<void(bool, const std::string &)>; ///< Callback type for connection results (success, ssid)
 
         /**
          * @brief Constructor
@@ -83,15 +84,20 @@ namespace Wifi
         void scan_networks_async();
 
         /**
-         * @brief Connect to a WiFi network
+         * @brief Connect to a WiFi network asynchronously
          * @param ssid The SSID (name) of the network to connect to
          * @param password The password for the network (empty for open networks)
          * @param security_type The security type (defaults to "wpa-psk" for WPA/WPA2)
+         * @param callback Optional callback function to be called when the connection attempt completes
          *
-         * Attempts to connect to the specified WiFi network. First tries to use
-         * saved credentials if available, then creates a new connection if needed.
+         * Attempts to connect to the specified WiFi network in a background thread.
+         * First tries to use saved credentials if available, then creates a new connection if needed.
+         * This method returns immediately and the connection runs in a background thread.
+         * When the connection attempt completes, the callback (if provided) will be called with the result.
          */
-        void connect(const std::string &ssid, const std::string &password, const std::string &security_type = "wpa-psk");
+        void connect_async(const std::string &ssid, const std::string &password,
+                           const std::string &security_type = "wpa-psk",
+                           ConnectionCallback callback = nullptr);
 
         /**
          * @brief Disconnect from the current WiFi network

@@ -34,7 +34,7 @@ namespace Wifi
          *
          * Initializes the WiFi state by checking if WiFi is currently enabled
          */
-        Impl() : wifi_enabled_(check_wifi_enabled()), scan_thread_(nullptr)
+        Impl() : wifi_enabled_(check_wifi_enabled()), scan_thread_(nullptr), connect_thread_(nullptr)
         {
             // Initialize the dispatcher for thread-safe UI updates
             scan_dispatcher_.connect([this]()
@@ -43,11 +43,24 @@ namespace Wifi
             if (update_callback_) {
                 update_callback_(networks_);
             } });
+
+            // Initialize the dispatcher for connection results
+            connect_dispatcher_.connect([this]()
+                                        {
+            // This runs in the main thread
+            if (connect_callback_) {
+                connect_callback_(connect_success_, connect_ssid_);
+                // Clear the callback after it's been called
+                connect_callback_ = nullptr;
+            } });
         }
         ~Impl()
         {
             // Clean up any running scan thread
             stop_scan_thread();
+
+            // Clean up any running connect thread
+            stop_connect_thread();
         }
 
         /**
@@ -185,110 +198,6 @@ namespace Wifi
                 std::lock_guard<std::mutex> lock(networks_mutex_);
                 networks_ = std::move(new_networks);
             }
-        }
-
-        /**
-         * @brief Connect to a WiFi network
-         * @param ssid The SSID of the network to connect to
-         * @param password The password for the network (empty for open networks)
-         * @param security_type The security type (e.g., "wpa-psk")
-         *
-         * First tries to connect using saved credentials. If that fails,
-         * creates a new connection profile with the provided credentials.
-         * Rescans networks after attempting to connect.
-         */
-        void connect(const std::string &ssid, const std::string &password, const std::string &security_type)
-        {
-            // First check if we're already connected to this network to avoid unnecessary operations
-            bool already_connected = false;
-            for (const auto &net : networks_)
-            {
-                if (net.ssid == ssid && net.connected)
-                {
-                    already_connected = true;
-                    break;
-                }
-            }
-
-            if (already_connected)
-            {
-                std::cout << "Already connected to " << ssid << std::endl;
-                return;
-            }
-
-            std::cout << "Connecting to WiFi network: " << ssid << "..." << std::endl;
-
-            // Try to connect using an existing saved connection profile first
-            std::string saved_cmd = "nmcli con up \"" + ssid + "\" 2>/dev/null";
-            int saved_result = std::system(saved_cmd.c_str());
-
-            if (saved_result == 0)
-            {
-                std::cout << "Successfully connected to saved network: " << ssid << std::endl;
-                scan_networks_async();
-                return;
-            }
-
-            // If no saved connection exists or connection failed, create a new connection profile
-
-            // For secured networks, create a detailed connection profile with security settings
-            if (!password.empty() && !security_type.empty())
-            {
-                // Get the WiFi interface name (e.g., wlan0, wlp3s0)
-                std::string wifi_interface = get_wifi_interface();
-                if (wifi_interface.empty())
-                {
-                    std::cerr << "Error: No WiFi interface found" << std::endl;
-                    return;
-                }
-
-                // Use the SSID as the connection profile name
-                std::string conn_name = ssid;
-
-                // Delete any existing connection with the same name to avoid conflicts
-                std::string delete_cmd = "nmcli con delete \"" + conn_name + "\" 2>/dev/null || true";
-                std::system(delete_cmd.c_str());
-
-                // Create a new connection profile with the correct security settings
-                std::string create_cmd = "nmcli con add type wifi con-name \"" + conn_name + "\" ifname " + wifi_interface +
-                                         " ssid \"" + ssid + "\" && " +
-                                         "nmcli con modify \"" + conn_name + "\" wifi-sec.key-mgmt " + security_type + " && " +
-                                         "nmcli con modify \"" + conn_name + "\" wifi-sec.psk \"" + password + "\" && " +
-                                         "nmcli con up \"" + conn_name + "\"";
-
-                int result = std::system(create_cmd.c_str());
-
-                if (result == 0)
-                {
-                    std::cout << "Successfully connected to " << ssid << std::endl;
-                }
-                else
-                {
-                    std::cerr << "Failed to connect to " << ssid << std::endl;
-                }
-            }
-            else
-            {
-                // For open networks or when security type isn't specified, use the simpler connection method
-                std::string cmd = "nmcli dev wifi connect \"" + ssid + "\"";
-                if (!password.empty())
-                {
-                    cmd += " password \"" + password + "\"";
-                }
-
-                int result = std::system(cmd.c_str());
-
-                if (result == 0)
-                {
-                    std::cout << "Successfully connected to " << ssid << std::endl;
-                }
-                else
-                {
-                    std::cerr << "Failed to connect to " << ssid << std::endl;
-                }
-            }
-
-            scan_networks_async();
         }
 
         /**
@@ -522,6 +431,21 @@ namespace Wifi
             return networks_;
         }
 
+        /**
+         * @brief Connect to a WiFi network asynchronously
+         * @param ssid The SSID of the network to connect to
+         * @param password The password for the network (empty for open networks)
+         * @param security_type The security type (e.g., "wpa-psk")
+         * @param callback Optional callback function to be called when the connection attempt completes
+         *
+         * First tries to connect using saved credentials. If that fails,
+         * creates a new connection profile with the provided credentials.
+         * Rescans networks after attempting to connect.
+         * This method returns immediately and the connection runs in a background thread.
+         */
+        void connect_async(const std::string &ssid, const std::string &password,
+                           const std::string &security_type, ConnectionCallback callback);
+
     private:
         std::vector<Network> networks_;
         std::mutex networks_mutex_;
@@ -541,6 +465,20 @@ namespace Wifi
                 scan_thread_->join();
             }
             scan_thread_.reset();
+        }
+
+        /**
+         * @brief Stop the connect thread if it's running
+         *
+         * Joins the connect thread if it's joinable and resets the pointer.
+         */
+        void stop_connect_thread()
+        {
+            if (connect_thread_ && connect_thread_->joinable())
+            {
+                connect_thread_->join();
+            }
+            connect_thread_.reset();
         }
 
         /**
@@ -596,6 +534,13 @@ namespace Wifi
             tokens.push_back(token);
             return tokens;
         }
+
+        // Additional member variables for connection
+        std::unique_ptr<std::thread> connect_thread_;   ///< Thread for asynchronous connection
+        Glib::Dispatcher connect_dispatcher_;           ///< Dispatcher for connection results
+        ConnectionCallback connect_callback_ = nullptr; ///< Callback for connection results
+        bool connect_success_ = false;                  ///< Whether the last connection attempt was successful
+        std::string connect_ssid_;                      ///< SSID of the network being connected to
     };
 
     /**
@@ -635,14 +580,16 @@ namespace Wifi
     }
 
     /**
-     * @brief Connect to a WiFi network
+     * @brief Connect to a WiFi network asynchronously
      * @param ssid The SSID of the network to connect to
      * @param password The password for the network (empty for open networks)
      * @param security_type The security type (defaults to "wpa-psk")
+     * @param callback Optional callback function to be called when the connection attempt completes
      */
-    void WifiManager::connect(const std::string &ssid, const std::string &password, const std::string &security_type)
+    void WifiManager::connect_async(const std::string &ssid, const std::string &password,
+                                    const std::string &security_type, ConnectionCallback callback)
     {
-        impl_->connect(ssid, password, security_type);
+        impl_->connect_async(ssid, password, security_type, callback);
     }
 
     /**
@@ -712,6 +659,128 @@ namespace Wifi
     const WifiManager::NetworkList &WifiManager::get_networks() const
     {
         return impl_->get_networks();
+    }
+
+    /**
+     * @brief Implementation of connect_async for WifiManager::Impl
+     */
+    void WifiManager::Impl::connect_async(const std::string &ssid, const std::string &password,
+                                          const std::string &security_type, WifiManager::ConnectionCallback callback)
+    {
+        // Store the callback for later use
+        connect_callback_ = callback;
+        connect_ssid_ = ssid;
+
+        // Stop any existing connect thread
+        stop_connect_thread();
+
+        // Start a new connect thread
+        connect_thread_ = std::make_unique<std::thread>([this, ssid, password, security_type]()
+                                                        {
+            // First check if we're already connected to this network to avoid unnecessary operations
+            bool already_connected = false;
+            for (const auto &net : networks_)
+            {
+                if (net.ssid == ssid && net.connected)
+                {
+                    already_connected = true;
+                    break;
+                }
+            }
+
+            if (already_connected)
+            {
+                std::cout << "Already connected to " << ssid << std::endl;
+                connect_success_ = true;
+                connect_dispatcher_.emit();
+                return;
+            }
+
+            std::cout << "Connecting to WiFi network: " << ssid << "..." << std::endl;
+
+            // Try to connect using an existing saved connection profile first
+            std::string saved_cmd = "nmcli con up \"" + ssid + "\" 2>/dev/null";
+            int saved_result = std::system(saved_cmd.c_str());
+
+            if (saved_result == 0)
+            {
+                std::cout << "Successfully connected to saved network: " << ssid << std::endl;
+                connect_success_ = true;
+                connect_dispatcher_.emit();
+                scan_networks_async();
+                return;
+            }
+
+            // If no saved connection exists or connection failed, create a new connection profile
+            bool success = false;
+
+            // For secured networks, create a detailed connection profile with security settings
+            if (!password.empty() && !security_type.empty())
+            {
+                // Get the WiFi interface name (e.g., wlan0, wlp3s0)
+                std::string wifi_interface = get_wifi_interface();
+                if (wifi_interface.empty())
+                {
+                    std::cerr << "Error: No WiFi interface found" << std::endl;
+                    connect_success_ = false;
+                    connect_dispatcher_.emit();
+                    return;
+                }
+
+                // Use the SSID as the connection profile name
+                std::string conn_name = ssid;
+
+                // Delete any existing connection with the same name to avoid conflicts
+                std::string delete_cmd = "nmcli con delete \"" + conn_name + "\" 2>/dev/null || true";
+                std::system(delete_cmd.c_str());
+
+                // Create a new connection profile with the correct security settings
+                std::string create_cmd = "nmcli con add type wifi con-name \"" + conn_name + "\" ifname " + wifi_interface +
+                                         " ssid \"" + ssid + "\" && " +
+                                         "nmcli con modify \"" + conn_name + "\" wifi-sec.key-mgmt " + security_type + " && " +
+                                         "nmcli con modify \"" + conn_name + "\" wifi-sec.psk \"" + password + "\" && " +
+                                         "nmcli con up \"" + conn_name + "\"";
+
+                int result = std::system(create_cmd.c_str());
+
+                if (result == 0)
+                {
+                    std::cout << "Successfully connected to " << ssid << std::endl;
+                    success = true;
+                }
+                else
+                {
+                    std::cerr << "Failed to connect to " << ssid << std::endl;
+                }
+            }
+            else
+            {
+                // For open networks or when security type isn't specified, use the simpler connection method
+                std::string cmd = "nmcli dev wifi connect \"" + ssid + "\"";
+                if (!password.empty())
+                {
+                    cmd += " password \"" + password + "\"";
+                }
+
+                int result = std::system(cmd.c_str());
+
+                if (result == 0)
+                {
+                    std::cout << "Successfully connected to " << ssid << std::endl;
+                    success = true;
+                }
+                else
+                {
+                    std::cerr << "Failed to connect to " << ssid << std::endl;
+                }
+            }
+
+            connect_success_ = success;
+            connect_dispatcher_.emit();
+            scan_networks_async(); });
+
+        // Detach the thread so it can continue running after this function returns
+        connect_thread_->detach();
     }
 
 } // namespace Wifi
