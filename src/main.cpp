@@ -33,7 +33,8 @@
  * implements lazy loading for better performance, and provides
  * functionality for switching between tabs.
  */
-class MainWindow : public Gtk::Window {
+class MainWindow : public Gtk::Window
+{
 public:
     /**
      * @brief Constructor for MainWindow
@@ -41,7 +42,8 @@ public:
      * @param minimal_mode Whether to hide the tab bar
 better_control.py     * @param floating_mode Whether to make the window float on tiling window managers
      */
-    MainWindow(const std::string& initial_tab = "", bool minimal_mode = false, bool floating_mode = false) {
+    MainWindow(const std::string &initial_tab = "", bool minimal_mode = false, bool floating_mode = false)
+    {
         initial_tab_ = initial_tab;
         minimal_mode_ = minimal_mode;
         prevent_auto_loading_ = !initial_tab_.empty();
@@ -50,20 +52,27 @@ better_control.py     * @param floating_mode Whether to make the window float on
 
         // Set window type hint based on floating mode
         // DIALOG hint makes the window float on tiling window managers
-        if (floating_mode) {
+        if (floating_mode)
+        {
             set_type_hint(Gdk::WINDOW_TYPE_HINT_DIALOG);
-        } else {
+        }
+        else
+        {
             set_type_hint(Gdk::WINDOW_TYPE_HINT_NORMAL);
         }
 
         // Check if running under Hyprland
-        const char* hyprland_signature = getenv("HYPRLAND_INSTANCE_SIGNATURE");
-        if (hyprland_signature != nullptr) {
+        const char *hyprland_signature = getenv("HYPRLAND_INSTANCE_SIGNATURE");
+        if (hyprland_signature != nullptr)
+        {
             std::string cmd;
-            if (floating_mode) {
+            if (floating_mode)
+            {
                 // Add a rule to make the window float
                 cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
-            } else {
+            }
+            else
+            {
                 // Remove any existing floating rule
                 cmd = "hyprctl --batch 'keyword windowrulev2 unset,class:^(ultimate-control)$'";
             }
@@ -90,13 +99,15 @@ better_control.py     * @param floating_mode Whether to make the window float on
         create_settings_button();
 
         // Handle window close event with quick exit to avoid hanging
-        signal_delete_event().connect([](GdkEventAny* event) -> bool {
-            std::quick_exit(0); // Force immediate exit without cleanup
-            return true; // Prevent the default handler from running
-        });
+        signal_delete_event().connect([](GdkEventAny *event) -> bool
+                                      {
+                                          std::quick_exit(0); // Force immediate exit without cleanup
+                                          return true;        // Prevent the default handler from running
+                                      });
 
         // Handle keybinds to close window
-        signal_key_press_event().connect([](GdkEventKey* event) -> bool {
+        signal_key_press_event().connect([](GdkEventKey *event) -> bool
+                                         {
             if (event->keyval == 'q' || event->keyval == 'Q') {
                 if (event->state & GDK_SHIFT_MASK) {
                     std::cout << "Application closed" << std::endl;
@@ -106,15 +117,14 @@ better_control.py     * @param floating_mode Whether to make the window float on
                     std::quick_exit(0);
                 }
             }
-            return false;
-        });
-
+            return false; });
 
         // Show all children
         show_all_children();
 
         // Switch to the initial tab if specified
-        if (!initial_tab_.empty()) {
+        if (!initial_tab_.empty())
+        {
             switch_to_tab(initial_tab_);
         }
     }
@@ -125,12 +135,15 @@ better_control.py     * @param floating_mode Whether to make the window float on
      *
      * If the tab content isn't loaded yet, this will trigger the loading process
      */
-    void switch_to_tab(const std::string& tab_id) {
+    void switch_to_tab(const std::string &tab_id)
+    {
         // Find the tab in our map of tab widgets
         auto it = tab_widgets_.find(tab_id);
-        if (it != tab_widgets_.end()) {
+        if (it != tab_widgets_.end())
+        {
             // Load the tab content if not already loaded or loading
-            if (!it->second.loaded && !it->second.loading) {
+            if (!it->second.loaded && !it->second.loading)
+            {
                 // Show loading indicator and start async loading
                 show_loading_indicator(tab_id, it->second.page_num);
                 load_tab_content_async(tab_id, it->second.page_num);
@@ -149,12 +162,14 @@ better_control.py     * @param floating_mode Whether to make the window float on
     /**
      * @brief Simple class for a rotating settings icon using CSS animations
      */
-    class RotatingSettingsIcon : public Gtk::Image {
+    class RotatingSettingsIcon : public Gtk::Image
+    {
     public:
         /**
          * @brief Constructor
          */
-        RotatingSettingsIcon() : animating_(false) {
+        RotatingSettingsIcon() : animating_(false)
+        {
             // Set the icon and prepare CSS animation
             set_from_icon_name("preferences-system-symbolic", Gtk::ICON_SIZE_MENU);
             set_name("settings-icon");
@@ -164,18 +179,21 @@ better_control.py     * @param floating_mode Whether to make the window float on
 
             // Simple CSS for rotation animation
             const std::string css = ""
-                "#settings-icon {"
-                "    transition: all 200ms ease;"
-                "}"
-                "#settings-icon.rotate-active {"
-                "    -gtk-icon-transform: rotate(360deg);"
-                "    transition: all 600ms ease;"
-                "}";
+                                    "#settings-icon {"
+                                    "    transition: all 200ms ease;"
+                                    "}"
+                                    "#settings-icon.rotate-active {"
+                                    "    -gtk-icon-transform: rotate(360deg);"
+                                    "    transition: all 600ms ease;"
+                                    "}";
 
-            try {
+            try
+            {
                 css_provider_->load_from_data(css);
                 get_style_context()->add_provider(css_provider_, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-            } catch (const Glib::Error& ex) {
+            }
+            catch (const Glib::Error &ex)
+            {
                 std::cerr << "Error loading CSS: " << ex.what() << std::endl;
             }
         }
@@ -183,8 +201,10 @@ better_control.py     * @param floating_mode Whether to make the window float on
         /**
          * @brief Start the rotation animation
          */
-        void start_animation() {
-            if (animating_) return;
+        void start_animation()
+        {
+            if (animating_)
+                return;
             animating_ = true;
             get_style_context()->add_class("rotate-active");
         }
@@ -192,7 +212,8 @@ better_control.py     * @param floating_mode Whether to make the window float on
         /**
          * @brief Reset the rotation animation
          */
-        void reset_animation() {
+        void reset_animation()
+        {
             get_style_context()->remove_class("rotate-active");
             animating_ = false;
         }
@@ -202,7 +223,8 @@ better_control.py     * @param floating_mode Whether to make the window float on
         Glib::RefPtr<Gtk::CssProvider> css_provider_;
     };
 
-    void create_settings_button() {
+    void create_settings_button()
+    {
         // Create a settings button with our custom rotating icon
         auto settings_button = Gtk::make_managed<Gtk::Button>();
         settings_button->set_tooltip_text("Settings");
@@ -219,11 +241,12 @@ better_control.py     * @param floating_mode Whether to make the window float on
         button_box->show_all();
 
         // Connect click handler to open settings and animate icon
-        settings_button->signal_clicked().connect([this, rotating_icon]() {
+        settings_button->signal_clicked().connect([this, rotating_icon]()
+                                                  {
             rotating_icon->start_animation();
 
             if (!settings_window_) {
-                settings_window_ = std::make_unique<Settings::SettingsWindow>();
+                settings_window_ = std::make_unique<Settings::SettingsWindow>(*this);
 
                 // Reset animation when settings window closes
                 settings_window_->signal_hide().connect([rotating_icon]() {
@@ -236,8 +259,7 @@ better_control.py     * @param floating_mode Whether to make the window float on
                 });
             }
 
-            settings_window_->present();
-        });
+            settings_window_->present(); });
     }
 
 private:
@@ -247,9 +269,11 @@ private:
      * Creates tab placeholders in the order specified by settings.
      * Actual tab content is loaded lazily when the tab is selected.
      */
-    void create_tabs() {
+    void create_tabs()
+    {
         // Clear existing tabs
-        while (notebook_.get_n_pages() > 0) {
+        while (notebook_.get_n_pages() > 0)
+        {
             notebook_.remove_page(-1);
         }
         tab_widgets_.clear();
@@ -258,11 +282,14 @@ private:
         auto tab_order = tab_settings_->get_tab_order();
 
         // If we have an initial tab specified, make sure it's enabled
-        if (!initial_tab_.empty()) {
+        if (!initial_tab_.empty())
+        {
             tab_settings_->set_tab_enabled(initial_tab_, true);
         }
-        for (const auto& tab_id : tab_order) {
-            if (!tab_settings_->is_tab_enabled(tab_id)) {
+        for (const auto &tab_id : tab_order)
+        {
+            if (!tab_settings_->is_tab_enabled(tab_id))
+            {
                 continue; // Skip disabled tabs
             }
 
@@ -271,13 +298,20 @@ private:
             placeholder->set_size_request(100, 100);
 
             // Add the tab with appropriate icon and label
-            if (tab_id == "volume") {
+            if (tab_id == "volume")
+            {
                 add_tab(tab_id, placeholder, "audio-volume-high-symbolic", "Volume");
-            } else if (tab_id == "wifi") {
+            }
+            else if (tab_id == "wifi")
+            {
                 add_tab(tab_id, placeholder, "network-wireless-symbolic", "WiFi");
-            } else if (tab_id == "display") {
+            }
+            else if (tab_id == "display")
+            {
                 add_tab(tab_id, placeholder, "video-display-symbolic", "Display");
-            } else if (tab_id == "power") {
+            }
+            else if (tab_id == "power")
+            {
                 add_tab(tab_id, placeholder, "system-shutdown-symbolic", "Power");
             }
         }
@@ -289,7 +323,8 @@ private:
      * @param label_text Text to display in the tab
      * @return Pointer to the created Gtk::Box containing the icon and label
      */
-    Gtk::Box* create_tab_label(const std::string& icon_name, const std::string& label_text) {
+    Gtk::Box *create_tab_label(const std::string &icon_name, const std::string &label_text)
+    {
         // Create horizontal box to hold icon and label
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
         auto icon = Gtk::make_managed<Gtk::Image>();
@@ -308,7 +343,8 @@ private:
      * @param icon_name Name of the icon to use in the tab label
      * @param label_text Text to display in the tab label
      */
-    void add_tab(const std::string& id, Gtk::Widget* widget, const std::string& icon_name, const std::string& label_text) {
+    void add_tab(const std::string &id, Gtk::Widget *widget, const std::string &icon_name, const std::string &label_text)
+    {
         // Create tab label with icon and text
         auto box = create_tab_label(icon_name, label_text);
 
@@ -319,9 +355,8 @@ private:
         tab_widgets_[id] = TabInfo{widget, page_num, false, false};
 
         // Create a dispatcher for this tab
-        tab_loaded_dispatchers_[id].connect([this, id]() {
-            on_tab_loaded(id);
-        });
+        tab_loaded_dispatchers_[id].connect([this, id]()
+                                            { on_tab_loaded(id); });
     }
 
     /**
@@ -333,26 +368,32 @@ private:
      * and loading its content if it hasn't been loaded yet.
      * Also prevents switching to the separator tab.
      */
-    void on_tab_switch(Gtk::Widget* page, guint page_num) {
+    void on_tab_switch(Gtk::Widget *page, guint page_num)
+    {
         // Guard against recursive calls that can happen during tab loading
         static bool loading = false;
-        if (loading) {
+        if (loading)
+        {
             return;
         }
 
         // If we're preventing auto-loading (e.g., when starting with a specific tab),
         // don't load other tabs automatically
-        if (prevent_auto_loading_) {
+        if (prevent_auto_loading_)
+        {
             // Only allow loading the initial tab
             std::string current_tab;
-            for (const auto& [id, info] : tab_widgets_) {
-                if (info.page_num == static_cast<int>(page_num)) {
+            for (const auto &[id, info] : tab_widgets_)
+            {
+                if (info.page_num == static_cast<int>(page_num))
+                {
                     current_tab = id;
                     break;
                 }
             }
 
-            if (current_tab != initial_tab_) {
+            if (current_tab != initial_tab_)
+            {
                 return;
             }
         }
@@ -361,8 +402,10 @@ private:
         std::string tab_id_to_load;
         {
             std::lock_guard<std::mutex> lock(tab_mutex_);
-            for (const auto& [id, info] : tab_widgets_) {
-                if (info.page_num == static_cast<int>(page_num) && !info.loaded && !info.loading) {
+            for (const auto &[id, info] : tab_widgets_)
+            {
+                if (info.page_num == static_cast<int>(page_num) && !info.loaded && !info.loading)
+                {
                     tab_id_to_load = id;
                     break;
                 }
@@ -370,23 +413,24 @@ private:
         }
 
         // If we found a tab to load, load it
-        if (!tab_id_to_load.empty()) {
+        if (!tab_id_to_load.empty())
+        {
             // Set loading flag to prevent recursive calls
             loading = true;
 
             // Use a single-shot timer to delay loading slightly
             // This prevents UI freezes and GTK+ rendering issues during tab switching
-            Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]() {
+            Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]()
+                                                {
                 // Show loading indicator and start async loading
                 show_loading_indicator(tab_id_to_load, page_num);
-                load_tab_content_async(tab_id_to_load, page_num);
-            }, 50);
+                load_tab_content_async(tab_id_to_load, page_num); }, 50);
 
             // Reset loading flag after a short delay
-            Glib::signal_timeout().connect_once([]() {
+            Glib::signal_timeout().connect_once([]()
+                                                {
                 // Use a new lambda to avoid capturing the static variable
-                loading = false;
-            }, 100);
+                loading = false; }, 100);
         }
     }
 
@@ -394,7 +438,8 @@ private:
      * @brief Create a loading indicator with spinner and text
      * @return Widget containing the loading indicator
      */
-    Gtk::Widget* create_loading_indicator() {
+    Gtk::Widget *create_loading_indicator()
+    {
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 10);
         box->set_halign(Gtk::ALIGN_CENTER);
         box->set_valign(Gtk::ALIGN_CENTER);
@@ -420,21 +465,25 @@ private:
      *
      * Replaces the tab's placeholder with a loading indicator
      */
-    void show_loading_indicator(const std::string& id, int page_num) {
+    void show_loading_indicator(const std::string &id, int page_num)
+    {
         std::lock_guard<std::mutex> lock(tab_mutex_);
 
         // Check if already loaded or loading
-        if (tab_widgets_[id].loaded || tab_widgets_[id].loading) {
+        if (tab_widgets_[id].loaded || tab_widgets_[id].loading)
+        {
             return;
         }
 
         // Make sure the tab exists in the notebook
-        if (tab_widgets_.find(id) == tab_widgets_.end()) {
+        if (tab_widgets_.find(id) == tab_widgets_.end())
+        {
             return;
         }
 
         // Make sure the page number is valid
-        if (page_num < 0 || page_num >= notebook_.get_n_pages()) {
+        if (page_num < 0 || page_num >= notebook_.get_n_pages())
+        {
             return;
         }
 
@@ -448,25 +497,35 @@ private:
         std::string icon_name;
         std::string label_text;
 
-        if (id == "volume") {
+        if (id == "volume")
+        {
             icon_name = "audio-volume-high-symbolic";
             label_text = "Volume";
-        } else if (id == "wifi") {
+        }
+        else if (id == "wifi")
+        {
             icon_name = "network-wireless-symbolic";
             label_text = "WiFi";
-        } else if (id == "display") {
+        }
+        else if (id == "display")
+        {
             icon_name = "video-display-symbolic";
             label_text = "Display";
-        } else if (id == "power") {
+        }
+        else if (id == "power")
+        {
             icon_name = "system-shutdown-symbolic";
             label_text = "Power";
-        } else {
+        }
+        else
+        {
             // Unknown tab
             tab_widgets_[id].loading = false;
             return;
         }
 
-        try {
+        try
+        {
             // Create a new tab label with icon and text
             auto box = create_tab_label(icon_name, label_text);
 
@@ -485,10 +544,14 @@ private:
 
             // Display the loading indicator
             notebook_.set_current_page(new_page_num);
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             std::cerr << "Error showing loading indicator for tab " << id << ": " << e.what() << std::endl;
             tab_widgets_[id].loading = false;
-        } catch (...) {
+        }
+        catch (...)
+        {
             std::cerr << "Unknown error showing loading indicator for tab " << id << std::endl;
             tab_widgets_[id].loading = false;
         }
@@ -501,22 +564,24 @@ private:
      *
      * Uses a timeout to keep the UI responsive during loading
      */
-    void load_tab_content_async(const std::string& id, int page_num) {
+    void load_tab_content_async(const std::string &id, int page_num)
+    {
         // Check if already loaded or loading
         {
             std::lock_guard<std::mutex> lock(tab_mutex_);
-            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end())) {
+            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end()))
+            {
                 return;
             }
         }
 
         // Schedule content creation with a short delay
         // This keeps the UI responsive and allows the loading indicator to appear
-        Glib::signal_timeout().connect_once([this, id, page_num]() {
+        Glib::signal_timeout().connect_once([this, id, page_num]()
+                                            {
             // This runs in the main thread after a short delay
             // Create the actual tab content
-            create_tab_content(id, page_num);
-        }, 100); // Short delay to allow UI to update
+            create_tab_content(id, page_num); }, 100); // Short delay to allow UI to update
     }
 
     /**
@@ -527,38 +592,50 @@ private:
      * Creates the appropriate tab widget based on the tab ID
      * and replaces the loading indicator with it
      */
-    void create_tab_content(const std::string& id, int page_num) {
+    void create_tab_content(const std::string &id, int page_num)
+    {
         // Check if already loaded
         {
             std::lock_guard<std::mutex> lock(tab_mutex_);
-            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end())) {
+            if (tab_widgets_[id].loaded || (tab_widgets_.find(id) == tab_widgets_.end()))
+            {
                 return;
             }
         }
 
-        try {
+        try
+        {
             // Create the actual tab content
-            Gtk::Widget* content = nullptr;
+            Gtk::Widget *content = nullptr;
             std::string icon_name;
             std::string label_text;
 
-            if (id == "volume") {
+            if (id == "volume")
+            {
                 content = Gtk::make_managed<Volume::VolumeTab>();
                 icon_name = "audio-volume-high-symbolic";
                 label_text = "Volume";
-            } else if (id == "wifi") {
+            }
+            else if (id == "wifi")
+            {
                 content = Gtk::make_managed<Wifi::WifiTab>();
                 icon_name = "network-wireless-symbolic";
                 label_text = "WiFi";
-            } else if (id == "display") {
+            }
+            else if (id == "display")
+            {
                 content = Gtk::make_managed<Display::DisplayTab>();
                 icon_name = "video-display-symbolic";
                 label_text = "Display";
-            } else if (id == "power") {
+            }
+            else if (id == "power")
+            {
                 content = Gtk::make_managed<Power::PowerTab>();
                 icon_name = "system-shutdown-symbolic";
                 label_text = "Power";
-            } else {
+            }
+            else
+            {
                 // Unknown tab
                 std::lock_guard<std::mutex> lock(tab_mutex_);
                 tab_widgets_[id].loading = false;
@@ -599,13 +676,16 @@ private:
 
             // Notify that the tab has been loaded
             tab_loaded_dispatchers_[id].emit();
-
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             std::lock_guard<std::mutex> lock(tab_mutex_);
             tab_widgets_[id].loading = false;
             tab_load_errors_[id] = e.what();
             std::cerr << "Error creating tab " << id << ": " << e.what() << std::endl;
-        } catch (...) {
+        }
+        catch (...)
+        {
             std::lock_guard<std::mutex> lock(tab_mutex_);
             tab_widgets_[id].loading = false;
             tab_load_errors_[id] = "Unknown error";
@@ -620,7 +700,8 @@ private:
      * Called via the dispatcher when a tab is fully loaded.
      * Can be used for post-loading operations.
      */
-    void on_tab_loaded(const std::string& id) {
+    void on_tab_loaded(const std::string &id)
+    {
         std::cout << "Tab " << id << " loaded successfully" << std::endl;
     }
 
@@ -633,11 +714,12 @@ private:
     bool minimal_mode_ = false;
 
     // Tracks tab widgets and their loading state
-    struct TabInfo {
-        Gtk::Widget* widget;
+    struct TabInfo
+    {
+        Gtk::Widget *widget;
         int page_num;
         bool loaded;
-        bool loading;  // Indicates if the tab is currently being loaded
+        bool loading; // Indicates if the tab is currently being loaded
     };
     std::map<std::string, TabInfo> tab_widgets_;
 
@@ -656,7 +738,8 @@ private:
  * @param argv Array of command-line arguments
  * @return Application exit code
  */
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     // Set up command-line option parsing
     Glib::OptionContext context;
     Glib::OptionGroup group("options", "Application Options", "Application options");
@@ -716,30 +799,43 @@ int main(int argc, char* argv[]) {
     // Add the option group to the parsing context
     context.set_main_group(group);
 
-    try {
+    try
+    {
         context.parse(argc, argv);
-    } catch (const Glib::Error& error) {
+    }
+    catch (const Glib::Error &error)
+    {
         std::cerr << "Error parsing command line: " << error.what() << std::endl;
         return 1;
     }
 
     // Determine which tab to show initially based on command-line options
     std::string initial_tab;
-    if (volume_opt) {
+    if (volume_opt)
+    {
         initial_tab = "volume";
-    } else if (wifi_opt) {
+    }
+    else if (wifi_opt)
+    {
         initial_tab = "wifi";
-    } else if (display_opt) {
+    }
+    else if (display_opt)
+    {
         initial_tab = "display";
-    } else if (power_opt) {
+    }
+    else if (power_opt)
+    {
         initial_tab = "power";
-    } else if (settings_opt) {
+    }
+    else if (settings_opt)
+    {
         initial_tab = "settings";
     }
 
     // Check if floating mode should be enabled from settings
     // Command-line option takes precedence over settings
-    if (!floating_opt) {
+    if (!floating_opt)
+    {
         floating_opt = Core::get_setting("floating", "0") == "1";
     }
 
