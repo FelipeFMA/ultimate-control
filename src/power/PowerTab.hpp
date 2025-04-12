@@ -45,7 +45,7 @@ namespace Power
 
     private:
         /**
-         * @brief Accelerator group for keyboard shortcuts (e.g. S=Shutdown, R=Reboot, U=Suspend, H=Hibernate, L=Lock)
+         * @brief Accelerator group for keyboard shortcuts (user-configurable)
          */
         Glib::RefPtr<Gtk::AccelGroup> accel_group_;
 
@@ -75,7 +75,7 @@ namespace Power
         /**
          * @brief Handler for settings button clicks
          *
-         * Opens the power settings dialog to configure power commands.
+         * Opens the power settings dialog to configure power commands and keybinds.
          */
         void on_settings_clicked();
 
@@ -86,6 +86,23 @@ namespace Power
          * Adds a settings button with a cog icon to a section header.
          */
         void add_settings_button_to_header(Gtk::Box &header_box);
+
+        /**
+         * @brief Set up accelerators for all power actions based on user keybinds
+         *
+         * Reads keybinds from settings and binds them to the appropriate buttons.
+         * Should be called after loading or updating settings.
+         */
+        void setup_action_keybinds();
+
+        /**
+         * @brief Helper to parse a keybind string (e.g., "Ctrl+Alt+S") into keyval and modifier
+         * @param keybind The keybind string
+         * @param[out] keyval The resulting GDK key value
+         * @param[out] modifier The resulting Gdk::ModifierType
+         * @return true if parsing was successful, false otherwise
+         */
+        bool parse_keybind(const std::string &keybind, guint &keyval, Gdk::ModifierType &modifier);
 
         std::shared_ptr<PowerManager> manager_; ///< Power manager for executing power operations
 

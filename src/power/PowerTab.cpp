@@ -103,25 +103,23 @@ namespace Power
         system_buttons_box_.set_spacing(15);
         system_buttons_box_.set_homogeneous(true);
 
-        // Configure the shutdown button with icon and click handler, add shortcut hint and accelerator
-        shutdown_button_.set_label("Shutdown [S]");
+        // Configure the shutdown button with icon and click handler
+        shutdown_button_.set_label("Shutdown");
         shutdown_button_.set_image_from_icon_name("system-shutdown-symbolic", Gtk::ICON_SIZE_BUTTON);
         shutdown_button_.set_always_show_image(true);
         shutdown_button_.set_tooltip_text("Power off the system");
         shutdown_button_.signal_clicked().connect([this]()
                                                   { manager_->shutdown(); });
-        // Accelerator: S
-        shutdown_button_.add_accelerator("clicked", accel_group_, GDK_KEY_s, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+        // Accelerator will be set up dynamically
 
-        // Configure the reboot button with icon and click handler, add shortcut hint and accelerator
-        reboot_button_.set_label("Reboot [R]");
+        // Configure the reboot button with icon and click handler
+        reboot_button_.set_label("Reboot");
         reboot_button_.set_image_from_icon_name("system-reboot-symbolic", Gtk::ICON_SIZE_BUTTON);
         reboot_button_.set_always_show_image(true);
         reboot_button_.set_tooltip_text("Restart the system");
         reboot_button_.signal_clicked().connect([this]()
                                                 { manager_->reboot(); });
-        // Accelerator: R
-        reboot_button_.add_accelerator("clicked", accel_group_, GDK_KEY_r, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+        // Accelerator will be set up dynamically
 
         // Add both buttons to the buttons container
         system_buttons_box_.pack_start(shutdown_button_, Gtk::PACK_EXPAND_WIDGET);
@@ -169,35 +167,32 @@ namespace Power
         session_buttons_box_.set_spacing(15);
         session_buttons_box_.set_homogeneous(true);
 
-        // Configure the suspend button with icon and click handler, add shortcut hint and accelerator
-        suspend_button_.set_label("Suspend [U]");
+        // Configure the suspend button with icon and click handler
+        suspend_button_.set_label("Suspend");
         suspend_button_.set_image_from_icon_name("system-suspend-symbolic", Gtk::ICON_SIZE_BUTTON);
         suspend_button_.set_always_show_image(true);
         suspend_button_.set_tooltip_text("Put the system to sleep");
         suspend_button_.signal_clicked().connect([this]()
                                                  { manager_->suspend(); });
-        // Accelerator: U
-        suspend_button_.add_accelerator("clicked", accel_group_, GDK_KEY_u, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+        // Accelerator will be set up dynamically
 
-        // Configure the hibernate button with icon and click handler, add shortcut hint and accelerator
-        hibernate_button_.set_label("Hibernate [H]");
+        // Configure the hibernate button with icon and click handler
+        hibernate_button_.set_label("Hibernate");
         hibernate_button_.set_image_from_icon_name("system-hibernate-symbolic", Gtk::ICON_SIZE_BUTTON);
         hibernate_button_.set_always_show_image(true);
         hibernate_button_.set_tooltip_text("Hibernate the system");
         hibernate_button_.signal_clicked().connect([this]()
                                                    { manager_->hibernate(); });
-        // Accelerator: H
-        hibernate_button_.add_accelerator("clicked", accel_group_, GDK_KEY_h, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+        // Accelerator will be set up dynamically
 
-        // Configure the lock screen button with icon and click handler, add shortcut hint and accelerator
-        lock_button_.set_label("Lock [L]");
+        // Configure the lock screen button with icon and click handler
+        lock_button_.set_label("Lock");
         lock_button_.set_image_from_icon_name("system-lock-screen-symbolic", Gtk::ICON_SIZE_BUTTON);
         lock_button_.set_always_show_image(true);
         lock_button_.set_tooltip_text("Lock the screen");
         lock_button_.signal_clicked().connect([this]()
                                               { std::system(manager_->get_settings()->get_command("lock").c_str()); });
-        // Accelerator: L
-        lock_button_.add_accelerator("clicked", accel_group_, GDK_KEY_l, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+        // Accelerator will be set up dynamically
 
         // Add all three buttons to the buttons container
         session_buttons_box_.pack_start(suspend_button_, Gtk::PACK_EXPAND_WIDGET);
@@ -352,6 +347,94 @@ namespace Power
         {
             // Save the settings if OK was clicked
             dialog.save_settings();
+            // Re-setup keybinds after settings are changed
+            setup_action_keybinds();
+        }
+    }
+
+    // Helper to parse keybind string (e.g., "Ctrl+Alt+S") into keyval and modifier
+    bool PowerTab::parse_keybind(const std::string &keybind, guint &keyval, Gdk::ModifierType &modifier)
+    {
+        keyval = 0;
+        modifier = Gdk::ModifierType(0);
+        if (keybind.empty())
+            return false;
+
+        std::string str = keybind;
+        // Split by '+'
+        size_t pos = 0;
+        std::string token;
+        std::vector<std::string> parts;
+        while ((pos = str.find('+')) != std::string::npos)
+        {
+            parts.push_back(str.substr(0, pos));
+            str.erase(0, pos + 1);
+        }
+        parts.push_back(str);
+
+        // The last part is the key, the rest are modifiers
+        std::string key_part = parts.back();
+        parts.pop_back();
+
+        // Map modifier strings to Gdk::ModifierType
+        for (const auto &mod : parts)
+        {
+            if (mod == "Ctrl" || mod == "Control")
+                modifier = static_cast<Gdk::ModifierType>(modifier | Gdk::CONTROL_MASK);
+            else if (mod == "Alt")
+                modifier = static_cast<Gdk::ModifierType>(modifier | GDK_MOD1_MASK);
+            else if (mod == "Shift")
+                modifier = static_cast<Gdk::ModifierType>(modifier | GDK_SHIFT_MASK);
+            else if (mod == "Super" || mod == "Meta" || mod == "Win")
+                modifier = static_cast<Gdk::ModifierType>(modifier | GDK_SUPER_MASK);
+            // Add more if needed
+        }
+
+        // Convert key_part to keyval
+        if (key_part.length() == 1)
+        {
+            keyval = gdk_unicode_to_keyval(key_part[0]);
+        }
+        else
+        {
+            // Try to map named keys (e.g., "F1", "Delete")
+            keyval = gdk_keyval_from_name(key_part.c_str());
+            if (keyval == 0)
+                return false;
+        }
+        return true;
+    }
+
+    // Set up accelerators for all power actions based on user keybinds
+    void PowerTab::setup_action_keybinds()
+    {
+        // Set up accelerators for all power actions based on user keybinds
+
+        auto settings = manager_->get_settings();
+        struct
+        {
+            Gtk::Button *button;
+            std::string action;
+        } actions[] = {
+            {&shutdown_button_, "shutdown"},
+            {&reboot_button_, "reboot"},
+            {&suspend_button_, "suspend"},
+            {&hibernate_button_, "hibernate"},
+            {&lock_button_, "lock"},
+        };
+
+        for (const auto &act : actions)
+        {
+            std::string keybind = settings->get_keybind(act.action);
+            if (!keybind.empty())
+            {
+                guint keyval;
+                Gdk::ModifierType mod;
+                if (parse_keybind(keybind, keyval, mod))
+                {
+                    act.button->add_accelerator("clicked", accel_group_, keyval, mod, Gtk::ACCEL_VISIBLE);
+                }
+            }
         }
     }
 
