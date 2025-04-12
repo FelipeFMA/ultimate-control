@@ -141,16 +141,16 @@ better_control.py     * @param floating_mode Whether to make the window float on
         auto it = tab_widgets_.find(tab_id);
         if (it != tab_widgets_.end())
         {
-            // Load the tab content if not already loaded or loading
+            // First, switch to the requested tab to ensure it's visible immediately
+            notebook_.set_current_page(it->second.page_num);
+
+            // Then load the tab content if not already loaded or loading
             if (!it->second.loaded && !it->second.loading)
             {
                 // Show loading indicator and start async loading
                 show_loading_indicator(tab_id, it->second.page_num);
                 load_tab_content_async(tab_id, it->second.page_num);
             }
-
-            // Switch to the requested tab
-            notebook_.set_current_page(it->second.page_num);
         }
     }
 
@@ -321,10 +321,14 @@ private:
      * @brief Create a tab label with an icon and text
      * @param icon_name Name of the icon to use
      * @param label_text Text to display in the tab
-     * @return Pointer to the created Gtk::Box containing the icon and label
+     * @param tab_id ID of the tab this label is for
+     * @return Pointer to the created Gtk::EventBox containing the icon and label
      */
-    Gtk::Box *create_tab_label(const std::string &icon_name, const std::string &label_text)
+    Gtk::EventBox *create_tab_label(const std::string &icon_name, const std::string &label_text, const std::string &tab_id = "")
     {
+        // Create an event box to capture clicks
+        auto event_box = Gtk::make_managed<Gtk::EventBox>();
+
         // Create horizontal box to hold icon and label
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
         auto icon = Gtk::make_managed<Gtk::Image>();
@@ -332,8 +336,40 @@ private:
         auto label = Gtk::make_managed<Gtk::Label>(label_text);
         box->pack_start(*icon, Gtk::PACK_SHRINK);
         box->pack_start(*label, Gtk::PACK_SHRINK);
-        box->show_all();
-        return box;
+
+        // Add the box to the event box
+        event_box->add(*box);
+
+        // Add a click handler if tab_id is provided
+        if (!tab_id.empty())
+        {
+            event_box->signal_button_press_event().connect([this, tab_id](GdkEventButton *event) -> bool
+                                                           {
+                                                               // Only handle left clicks
+                                                               if (event->button == 1)
+                                                               {
+                                                                   // Find the tab in our map
+                                                                   auto it = tab_widgets_.find(tab_id);
+                                                                   if (it != tab_widgets_.end())
+                                                                   {
+                                                                       // Force switch to this tab
+                                                                       notebook_.set_current_page(it->second.page_num);
+
+                                                                       // If not loaded, trigger loading
+                                                                       if (!it->second.loaded && !it->second.loading)
+                                                                       {
+                                                                           show_loading_indicator(tab_id, it->second.page_num);
+                                                                           load_tab_content_async(tab_id, it->second.page_num);
+                                                                       }
+                                                                   }
+                                                                   return true; // Event handled
+                                                               }
+                                                               return false; // Let other handlers process the event
+                                                           });
+        }
+
+        event_box->show_all();
+        return event_box;
     }
 
     /**
@@ -345,11 +381,11 @@ private:
      */
     void add_tab(const std::string &id, Gtk::Widget *widget, const std::string &icon_name, const std::string &label_text)
     {
-        // Create tab label with icon and text
-        auto box = create_tab_label(icon_name, label_text);
+        // Create tab label with icon and text, passing the tab ID for click handling
+        auto event_box = create_tab_label(icon_name, label_text, id);
 
         // Add the tab
-        int page_num = notebook_.append_page(*widget, *box);
+        int page_num = notebook_.append_page(*widget, *event_box);
 
         // Store the widget and page number
         tab_widgets_[id] = TabInfo{widget, page_num, false, false};
@@ -418,13 +454,23 @@ private:
             // Set loading flag to prevent recursive calls
             loading = true;
 
-            // Use a single-shot timer to delay loading slightly
-            // This prevents UI freezes and GTK+ rendering issues during tab switching
-            Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]()
-                                                {
-                // Show loading indicator and start async loading
+            // Special handling for power tab - load it immediately without delay
+            if (tab_id_to_load == "power")
+            {
+                // Show loading indicator and start async loading immediately
                 show_loading_indicator(tab_id_to_load, page_num);
-                load_tab_content_async(tab_id_to_load, page_num); }, 50);
+                load_tab_content_async(tab_id_to_load, page_num);
+            }
+            else
+            {
+                // Use a single-shot timer to delay loading slightly for other tabs
+                // This prevents UI freezes and GTK+ rendering issues during tab switching
+                Glib::signal_timeout().connect_once([this, tab_id_to_load, page_num]()
+                                                    {
+                    // Show loading indicator and start async loading
+                    show_loading_indicator(tab_id_to_load, page_num);
+                    load_tab_content_async(tab_id_to_load, page_num); }, 50);
+            }
 
             // Reset loading flag after a short delay
             Glib::signal_timeout().connect_once([]()
@@ -526,14 +572,14 @@ private:
 
         try
         {
-            // Create a new tab label with icon and text
-            auto box = create_tab_label(icon_name, label_text);
+            // Create a new tab label with icon and text, passing the tab ID for click handling
+            auto event_box = create_tab_label(icon_name, label_text, id);
 
             // Replace the tab placeholder with the loading indicator
             notebook_.remove_page(page_num);
 
             // Insert the loading indicator
-            int new_page_num = notebook_.insert_page(*loading_indicator, *box, page_num);
+            int new_page_num = notebook_.insert_page(*loading_indicator, *event_box, page_num);
 
             // Show the loading indicator
             loading_indicator->show_all();
@@ -542,8 +588,11 @@ private:
             tab_widgets_[id].widget = loading_indicator;
             tab_widgets_[id].page_num = new_page_num;
 
-            // Display the loading indicator
-            notebook_.set_current_page(new_page_num);
+            // Only switch to the tab if we're not already on it
+            if (notebook_.get_current_page() != new_page_num)
+            {
+                notebook_.set_current_page(new_page_num);
+            }
         }
         catch (const std::exception &e)
         {
@@ -575,13 +624,25 @@ private:
             }
         }
 
-        // Schedule content creation with a short delay
-        // This keeps the UI responsive and allows the loading indicator to appear
-        Glib::signal_timeout().connect_once([this, id, page_num]()
-                                            {
-            // This runs in the main thread after a short delay
-            // Create the actual tab content
-            create_tab_content(id, page_num); }, 100); // Short delay to allow UI to update
+        // Special handling for power tab - load it with minimal delay
+        if (id == "power")
+        {
+            // Schedule content creation with minimal delay for power tab
+            Glib::signal_timeout().connect_once([this, id, page_num]()
+                                                {
+                // Create the actual tab content
+                create_tab_content(id, page_num); }, 10); // Very short delay for power tab
+        }
+        else
+        {
+            // Schedule content creation with a short delay for other tabs
+            // This keeps the UI responsive and allows the loading indicator to appear
+            Glib::signal_timeout().connect_once([this, id, page_num]()
+                                                {
+                // This runs in the main thread after a short delay
+                // Create the actual tab content
+                create_tab_content(id, page_num); }, 100); // Standard delay for other tabs
+        }
     }
 
     /**
@@ -650,14 +711,14 @@ private:
                 current_page_num = tab_widgets_[id].page_num;
             }
 
-            // Create a new tab label with icon and text
-            auto box = create_tab_label(icon_name, label_text);
+            // Create a new tab label with icon and text, passing the tab ID for click handling
+            auto event_box = create_tab_label(icon_name, label_text, id);
 
             // Replace the loading indicator with the actual tab content
             notebook_.remove_page(current_page_num);
 
             // Insert the new content
-            int new_page_num = notebook_.insert_page(*content, *box, current_page_num);
+            int new_page_num = notebook_.insert_page(*content, *event_box, current_page_num);
 
             // Show the new content
             content->show_all();
@@ -671,11 +732,17 @@ private:
                 tab_widgets_[id].loading = false;
             }
 
-            // Switch to the newly created tab
-            notebook_.set_current_page(new_page_num);
+            // Only switch to the tab if we're not already on it
+            if (notebook_.get_current_page() != new_page_num)
+            {
+                notebook_.set_current_page(new_page_num);
+            }
 
             // Notify that the tab has been loaded
             tab_loaded_dispatchers_[id].emit();
+
+            // Log successful tab loading
+            std::cout << "Tab " << id << " loaded and selected successfully" << std::endl;
         }
         catch (const std::exception &e)
         {
