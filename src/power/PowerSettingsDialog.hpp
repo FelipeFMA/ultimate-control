@@ -82,10 +82,11 @@ namespace Power
             Gtk::Entry entry; ///< Text entry field for the command or keybind
         };
 
-        std::map<std::string, CommandEntry> command_entries_; ///< Map of command names to entry fields
-        std::map<std::string, CommandEntry> keybind_entries_; ///< Map of action names to keybind entry fields
-        Gtk::Button *reset_button_;                           ///< Button to reset settings to defaults
-        Gtk::Notebook *notebook_;                             ///< Notebook for tabbed settings (commands/keybinds)
+        std::map<std::string, CommandEntry> command_entries_;  ///< Map of command names to entry fields
+        std::map<std::string, CommandEntry> keybind_entries_;  ///< Map of action names to keybind entry fields
+        Gtk::Button *reset_button_;                            ///< Button to reset settings to defaults
+        Gtk::Notebook *notebook_;                              ///< Notebook for tabbed settings (commands/keybinds)
+        Gtk::CheckButton *show_keybind_hints_check_ = nullptr; ///< Toggle for showing keybind hints
     };
 
 } // namespace Power

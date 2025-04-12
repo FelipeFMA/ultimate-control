@@ -104,6 +104,14 @@ namespace Power
          */
         bool parse_keybind(const std::string &keybind, guint &keyval, Gdk::ModifierType &modifier);
 
+        /**
+         * @brief Update all power button labels according to current settings
+         *
+         * Updates the labels of all power buttons to reflect the current
+         * keybind hints setting and keybinds.
+         */
+        void update_button_labels();
+
         std::shared_ptr<PowerManager> manager_; ///< Power manager for executing power operations
 
         // Main containers

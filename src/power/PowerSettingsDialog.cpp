@@ -139,6 +139,12 @@ namespace Power
         keybinds_grid->set_margin_start(5);
         keybinds_grid->set_margin_end(5);
 
+        // Show keybind hints toggle
+        show_keybind_hints_check_ = Gtk::make_managed<Gtk::CheckButton>("Show keybind hints on buttons");
+        show_keybind_hints_check_->set_active(settings_->get_show_keybind_hints());
+        show_keybind_hints_check_->set_margin_bottom(10);
+        keybinds_box->pack_start(*show_keybind_hints_check_, Gtk::PACK_SHRINK);
+
         int keybind_row = 0;
         keybind_entries_["shutdown"].label.set_text("Shutdown keybind:");
         keybind_entries_["shutdown"].label.set_halign(Gtk::ALIGN_START);
@@ -241,6 +247,9 @@ namespace Power
         keybind_entries_["suspend"].entry.set_text(settings_->get_keybind("suspend"));
         keybind_entries_["hibernate"].entry.set_text(settings_->get_keybind("hibernate"));
         keybind_entries_["lock"].entry.set_text(settings_->get_keybind("lock"));
+
+        if (show_keybind_hints_check_)
+            show_keybind_hints_check_->set_active(settings_->get_show_keybind_hints());
     }
 
     /**
@@ -262,6 +271,9 @@ namespace Power
         settings_->set_keybind("suspend", keybind_entries_["suspend"].entry.get_text());
         settings_->set_keybind("hibernate", keybind_entries_["hibernate"].entry.get_text());
         settings_->set_keybind("lock", keybind_entries_["lock"].entry.get_text());
+
+        if (show_keybind_hints_check_)
+            settings_->set_show_keybind_hints(show_keybind_hints_check_->get_active());
 
         settings_->save();
     }
@@ -287,6 +299,9 @@ namespace Power
         keybind_entries_["suspend"].entry.set_text("U");
         keybind_entries_["hibernate"].entry.set_text("H");
         keybind_entries_["lock"].entry.set_text("L");
+
+        if (show_keybind_hints_check_)
+            show_keybind_hints_check_->set_active(true);
     }
 
 } // namespace Power

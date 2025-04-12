@@ -104,7 +104,17 @@ namespace Power
         system_buttons_box_.set_homogeneous(true);
 
         // Configure the shutdown button with icon and click handler
-        shutdown_button_.set_label("Shutdown");
+        {
+            auto settings = manager_->get_settings();
+            std::string shutdown_label = "Shutdown";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("shutdown");
+                if (!key.empty())
+                    shutdown_label += " [" + key + "]";
+            }
+            shutdown_button_.set_label(shutdown_label);
+        }
         shutdown_button_.set_image_from_icon_name("system-shutdown-symbolic", Gtk::ICON_SIZE_BUTTON);
         shutdown_button_.set_always_show_image(true);
         shutdown_button_.set_tooltip_text("Power off the system");
@@ -113,7 +123,17 @@ namespace Power
         // Accelerator will be set up dynamically
 
         // Configure the reboot button with icon and click handler
-        reboot_button_.set_label("Reboot");
+        {
+            auto settings = manager_->get_settings();
+            std::string reboot_label = "Reboot";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("reboot");
+                if (!key.empty())
+                    reboot_label += " [" + key + "]";
+            }
+            reboot_button_.set_label(reboot_label);
+        }
         reboot_button_.set_image_from_icon_name("system-reboot-symbolic", Gtk::ICON_SIZE_BUTTON);
         reboot_button_.set_always_show_image(true);
         reboot_button_.set_tooltip_text("Restart the system");
@@ -168,7 +188,17 @@ namespace Power
         session_buttons_box_.set_homogeneous(true);
 
         // Configure the suspend button with icon and click handler
-        suspend_button_.set_label("Suspend");
+        {
+            auto settings = manager_->get_settings();
+            std::string suspend_label = "Suspend";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("suspend");
+                if (!key.empty())
+                    suspend_label += " [" + key + "]";
+            }
+            suspend_button_.set_label(suspend_label);
+        }
         suspend_button_.set_image_from_icon_name("system-suspend-symbolic", Gtk::ICON_SIZE_BUTTON);
         suspend_button_.set_always_show_image(true);
         suspend_button_.set_tooltip_text("Put the system to sleep");
@@ -177,7 +207,17 @@ namespace Power
         // Accelerator will be set up dynamically
 
         // Configure the hibernate button with icon and click handler
-        hibernate_button_.set_label("Hibernate");
+        {
+            auto settings = manager_->get_settings();
+            std::string hibernate_label = "Hibernate";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("hibernate");
+                if (!key.empty())
+                    hibernate_label += " [" + key + "]";
+            }
+            hibernate_button_.set_label(hibernate_label);
+        }
         hibernate_button_.set_image_from_icon_name("system-hibernate-symbolic", Gtk::ICON_SIZE_BUTTON);
         hibernate_button_.set_always_show_image(true);
         hibernate_button_.set_tooltip_text("Hibernate the system");
@@ -186,7 +226,17 @@ namespace Power
         // Accelerator will be set up dynamically
 
         // Configure the lock screen button with icon and click handler
-        lock_button_.set_label("Lock");
+        {
+            auto settings = manager_->get_settings();
+            std::string lock_label = "Lock";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("lock");
+                if (!key.empty())
+                    lock_label += " [" + key + "]";
+            }
+            lock_button_.set_label(lock_label);
+        }
         lock_button_.set_image_from_icon_name("system-lock-screen-symbolic", Gtk::ICON_SIZE_BUTTON);
         lock_button_.set_always_show_image(true);
         lock_button_.set_tooltip_text("Lock the screen");
@@ -349,6 +399,8 @@ namespace Power
             dialog.save_settings();
             // Re-setup keybinds after settings are changed
             setup_action_keybinds();
+            // Update button labels to reflect new settings (e.g., keybind hints)
+            update_button_labels();
         }
     }
 
@@ -435,6 +487,66 @@ namespace Power
                     act.button->add_accelerator("clicked", accel_group_, keyval, mod, Gtk::ACCEL_VISIBLE);
                 }
             }
+        }
+    }
+
+    // Update all power button labels according to current settings
+    void PowerTab::update_button_labels()
+    {
+        auto settings = manager_->get_settings();
+
+        // System buttons
+        {
+            std::string shutdown_label = "Shutdown";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("shutdown");
+                if (!key.empty())
+                    shutdown_label += " [" + key + "]";
+            }
+            shutdown_button_.set_label(shutdown_label);
+        }
+        {
+            std::string reboot_label = "Reboot";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("reboot");
+                if (!key.empty())
+                    reboot_label += " [" + key + "]";
+            }
+            reboot_button_.set_label(reboot_label);
+        }
+
+        // Session buttons
+        {
+            std::string suspend_label = "Suspend";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("suspend");
+                if (!key.empty())
+                    suspend_label += " [" + key + "]";
+            }
+            suspend_button_.set_label(suspend_label);
+        }
+        {
+            std::string hibernate_label = "Hibernate";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("hibernate");
+                if (!key.empty())
+                    hibernate_label += " [" + key + "]";
+            }
+            hibernate_button_.set_label(hibernate_label);
+        }
+        {
+            std::string lock_label = "Lock";
+            if (settings->get_show_keybind_hints())
+            {
+                std::string key = settings->get_keybind("lock");
+                if (!key.empty())
+                    lock_label += " [" + key + "]";
+            }
+            lock_button_.set_label(lock_label);
         }
     }
 

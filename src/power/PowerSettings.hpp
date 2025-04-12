@@ -99,6 +99,17 @@ namespace Power
          */
         void save() const;
 
+    public:
+        /**
+         * @brief Get whether keybind hints are shown on buttons
+         */
+        bool get_show_keybind_hints() const { return show_keybind_hints_; }
+
+        /**
+         * @brief Set whether keybind hints are shown on buttons
+         */
+        void set_show_keybind_hints(bool show) { show_keybind_hints_ = show; }
+
     private:
         /**
          * @brief Create the configuration directory if it doesn't exist
@@ -111,6 +122,7 @@ namespace Power
         std::string config_path_;                     ///< Path to the configuration file
         std::map<std::string, std::string> commands_; ///< Map of action names to command strings
         std::map<std::string, std::string> keybinds_; ///< Map of action names to keybind strings
+        bool show_keybind_hints_ = true;              ///< Whether to show keybind hints on buttons
     };
 
 } // namespace Power
