@@ -11,6 +11,9 @@
 #include <fstream>
 #include <map>
 #include <cstdlib>
+#include <vector>
+#include <glibmm/base64.h>     // For base64 decoding
+#include <giomm/memoryinputstream.h>  // For memory input stream
 
 namespace Settings
 {
@@ -60,9 +63,55 @@ namespace Settings
         // Create the tab order configuration section
         create_tab_order_section();
 
+        // Get the action area to customize the button layout
+        Gtk::ButtonBox* action_area = get_action_area();
+        action_area->set_layout(Gtk::BUTTONBOX_EDGE);  // Use EDGE layout for proper spacing
+
+        // Create and add the about button directly to the action area
+        Gtk::Button* about_button = new Gtk::Button("About");
+        about_button->set_tooltip_text("Show information about Ultimate Control");
+        about_button->signal_clicked().connect(sigc::mem_fun(*this, &SettingsWindow::show_about_dialog));
+        
+        // Create a box for the About button to match other buttons' sizing
+        Gtk::Box* left_buttons = new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 0);
+        left_buttons->set_halign(Gtk::ALIGN_START);
+        
+        // Set minimum width to match standard buttons
+        about_button->set_size_request(85, -1);
+        
+        // Add the About button to the left container
+        left_buttons->pack_start(*about_button, false, false, 0);
+        
+        // Add the left button container to the action area
+        action_area->pack_start(*left_buttons, false, false, 0);
+
+        // Create a box to hold Cancel and Save buttons together on the right
+        Gtk::Box* right_buttons = new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 6);
+        right_buttons->set_halign(Gtk::ALIGN_END);
+        
         // Add standard dialog buttons
-        add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-        add_button("_Save", Gtk::RESPONSE_APPLY);
+        Gtk::Button* cancel_button = new Gtk::Button("_Cancel");
+        cancel_button->set_use_underline(true);
+        cancel_button->signal_clicked().connect([this](){ response(Gtk::RESPONSE_CANCEL); });
+        cancel_button->set_size_request(85, -1);  // Make same width as About button
+        
+        Gtk::Button* save_button = new Gtk::Button("_Save");
+        save_button->set_use_underline(true);
+        save_button->signal_clicked().connect([this](){ response(Gtk::RESPONSE_APPLY); });
+        save_button->set_size_request(85, -1);  // Make same width as About button
+        
+        // Add buttons to the right box
+        right_buttons->pack_end(*save_button, false, false, 0);
+        right_buttons->pack_end(*cancel_button, false, false, 0);
+        
+        // Add the right buttons container to the action area
+        action_area->pack_end(*right_buttons, false, false, 0);
+        
+        // Make all widgets managed by their containers
+        about_button->set_can_default(false);
+        cancel_button->set_can_default(true);
+        save_button->set_can_default(true);
+        save_button->grab_default();
 
         // Connect the response signal
         signal_response().connect(sigc::mem_fun(*this, &SettingsWindow::on_response));
@@ -172,6 +221,8 @@ namespace Settings
             }
         }
         floating_check_.set_active(floating_enabled);
+
+        // About button is now added to the action area
 
         // Add all components to the general settings box
         general_settings_box_.pack_start(general_header_box_, Gtk::PACK_SHRINK);
@@ -404,7 +455,7 @@ namespace Settings
      */
     void SettingsWindow::on_response(int response_id)
     {
-        if (response_id == Gtk::RESPONSE_APPLY)
+        if (response_id == Gtk::RESPONSE_APPLY || response_id == GTK_RESPONSE_APPLY)
         {
             // Save tab settings to disk
             settings_->save();
@@ -447,6 +498,89 @@ namespace Settings
 
         // Close the dialog
         hide();
+    }
+
+    // Base64 encoded SVG logo
+    static const std::string LOGO_SVG_BASE64 = 
+        "PHN2ZyB2aWV3Qm94PSIwIDAgMzAwIDMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8IS0tIEVuZ3JlbmFnZW0gY29tIGZvcm1hdG8gdHJhZGlj"
+        "aW9uYWwgZSB0cmFwZXrDs2lkZXMgcGFyYSBvcyBkZW50ZXMgLS0+CiAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTUwLCAxNTApIj4KICAgIDwhLS0gQmFzZSBjaXJjdWxhciB"
+        "kYSBlbmdyZW5hZ2VtIC0tPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9Ijc1IiBmaWxsPSIjM2MzODM2IiBzdHJva2U9IiM2NjY2NjYiIHN0cm9rZS13aWR0aD0iMiIvP"
+        "gogICAgCiAgICA8IS0tIERlbnRlcyBkYSBlbmdyZW5hZ2VtIC0gMTYgZGVudGVzIHRyYXBlem9pZGFpcyBtYWlzIHJlYWxpc3RhcyAtLT4KICAgIDxnIGZpbGw9IiMyYzJjMm"
+        "MiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSIxLjUiPgogICAgICA8IS0tIERlbnRlIDEgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTAsLTc1IEwgLTI1"
+        "LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgwKSIvPgogICAgICA8IS0tIERlbnRlIDIgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTA"
+        "sLTc1IEwgLTI1LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgyMi41KSIvPgogICAgICA8IS0tIERlbnRlIDMgLS0+CiAgICAgIDxwYXRoIGQ9Ik"
+        "0gLTEwLDAgTCAtMTAsLTc1IEwgLTI1LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSg0NSkiLz4KICAgICAgPCEtLSBEZW50ZSA0IC0tPgogICA"
+        "gICA8cGF0aCBkPSJNIC0xMCwwIEwgLTEwLC03NSBMIC0yNSwtOTAgTCAtNDAsLTc1IEwgLTQwLDAgWiIgdHJhbnNmb3JtPSJyb3RhdGUoNjcuNSkiLz4KICAgICAgPCEtLSBEZ"
+        "W50ZSA1IC0tPgogICAgICA8cGF0aCBkPSJNIC0xMCwwIEwgLTEwLC03NSBMIC0yNSwtOTAgTCAtNDAsLTc1IEwgLTQwLDAgWiIgdHJhbnNmb3JtPSJyb3RhdGUoOTApIi8+Ci"
+        "AgICAgIDwhLS0gRGVudGUgNiAtLT4KICAgICAgPHBhdGggZD0iTSAtMTAsMCBMIC0xMCwtNzUgTCAtMjUsLTkwIEwgLTQwLC03NSBMIC00MCwwIFoiIHRyYW5zZm9ybT0icm90Y"
+        "XRlKDExMi41KSIvPgogICAgICA8IS0tIERlbnRlIDcgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTAsLTc1IEwgLTI1LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB"
+        "0cmFuc2Zvcm09InJvdGF0ZSgxMzUpIi8+CiAgICAgIDwhLS0gRGVudGUgOCAtLT4KICAgICAgPHBhdGggZD0iTSAtMTAsMCBMIC0xMCwtNzUgTCAtMjUsLTkwIEwgLTQwLC03NS"
+        "BMIC00MCwwIFoiIHRyYW5zZm9ybT0icm90YXRlKDE1Ny41KSIvPgogICAgICA8IS0tIERlbnRlIDkgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTAsLTc1IEwgLTI1"
+        "LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgxODApIi8+CiAgICAgIDwhLS0gRGVudGUgMTAgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTC"
+        "AtMTAsLTc1IEwgLTI1LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgyMDIuNSkiLz4KICAgICAgPCEtLSBEZW50ZSAxMSAtLT4KICAgICAgPHB"
+        "hdGggZD0iTSAtMTAsMCBMIC0xMCwtNzUgTCAtMjUsLTkwIEwgLTQwLC03NSBMIC00MCwwIFoiIHRyYW5zZm9ybT0icm90YXRlKDIyNSkiLz4KICAgICAgPCEtLSBEZW50ZSAxM"
+        "iAtLT4KICAgICAgPHBhdGggZD0iTSAtMTAsMCBMIC0xMCwtNzUgTCAtMjUsLTkwIEwgLTQwLC03NSBMIC00MCwwIFoiIHRyYW5zZm9ybT0icm90YXRlKDI0Ny41KSIvPgogICA"
+        "gICA8IS0tIERlbnRlIDEzIC0tPgogICAgICA8cGF0aCBkPSJNIC0xMCwwIEwgLTEwLC03NSBMIC0yNSwtOTAgTCAtNDAsLTc1IEwgLTQwLDAgWiIgdHJhbnNmb3JtPSJyb3Rhd"
+        "GUoMjcwKSIvPgogICAgICA8IS0tIERlbnRlIDE0IC0tPgogICAgICA8cGF0aCBkPSJNIC0xMCwwIEwgLTEwLC03NSBMIC0yNSwtOTAgTCAtNDAsLTc1IEwgLTQwLDAgWiIgdHJ"
+        "hbnNmb3JtPSJyb3RhdGUoMjkyLjUpIi8+CiAgICAgIDwhLS0gRGVudGUgMTUgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTAsLTc1IEwgLTI1LC05MCBMIC00MCwtN"
+        "zUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgzMTUpIi8+CiAgICAgIDwhLS0gRGVudGUgMTYgLS0+CiAgICAgIDxwYXRoIGQ9Ik0gLTEwLDAgTCAtMTAsLTc1IEwgLTI"
+        "1LC05MCBMIC00MCwtNzUgTCAtNDAsMCBaIiB0cmFuc2Zvcm09InJvdGF0ZSgzMzcuNSkiLz4KICAgIDwvZz4KICAgIAogICAgPCEtLSBBbmVsIGludGVybm8gcGFyYSBkYXIgc"
+        "HJvZnVuZGlkYWRlIC0tPgogICAgPGNpcmNsZSBjeD0iMCIgY3k9IjAiIHI9IjYwIiBmaWxsPSIjMjcyNzI3IiBzdHJva2U9IiM2NjY2NjYiIHN0cm9rZS13aWR0aD0iMS41Ii"
+        "8+CiAgPC9nPgogIAogIDwhLS0gTGV0cmEgVSAodmVyZGUpIC0tPgogIDxwYXRoIGQ9Ik0xMjUsMTIwIEwxMjUsMTcwIFExMjUsMTg1IDE0MCwxODUgTDE2MCwxODUgUTE3NSw"
+        "xODUgMTc1LDE3MCBMMTc1LDEyMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGVjMDdjIiBzdHJva2Utd2lkdGg9IjE1IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1s"
+        "aW5lam9pbj0icm91bmQiLz4KICAKICA8IS0tIExldHJhIEMgKHZlcm1lbGhhKSAtLT4KICA8cGF0aCBkPSJNMTYwLDEzMCBRMTYwLDExNSAxNTAsMTE1IFExNDAsMTE1IDE0MCA"
+        "xMzAgTDE0MCwxNjAgUTE0MCwxNzUgMTUwLDE3NSBRMTYwLDE3NSAxNjAsMTYwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmYjQ5MzQiIHN0cm9rZS13aWR0aD0iMTUiIHN0cm9rZ"
+        "S1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgogIAogIDwhLS0gQnVyYWNvIGNlbnRyYWwgY29tIGFwYXLDqm5jaWEgbWV0w6FsaWNhIC0tPgogIDx"
+        "jaXJjbGUgY3g9IjE1MCIgY3k9IjE1MCIgcj0iMTUiIGZpbGw9IiNlYmRiYjIiIHN0cm9rZT0iIzY2NjY2NiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPGNpcmNsZSBjeD0iMTUw"
+        "IiBjeT0iMTUwIiByPSI3IiBmaWxsPSIjNTA0OTQ1Ii8+Cjwvc3ZnPg==";
+    
+    /**
+     * @brief Create and open the about dialog
+     *
+     * Opens a dialog showing information about the application.
+     */
+    void SettingsWindow::show_about_dialog()
+    {
+        // Create an about dialog
+        Gtk::AboutDialog about_dialog;
+        
+        // Set dialog properties
+        about_dialog.set_transient_for(*this);
+        about_dialog.set_modal(true);
+        
+        // Set application information
+        about_dialog.set_program_name("Ultimate Control");
+        about_dialog.set_comments("A GTK control panel for Linux written in C++");
+        about_dialog.set_website("https://github.com/FelipeFMA/ultimate-control");
+        about_dialog.set_website_label("GitHub Repository");
+        about_dialog.set_copyright("Made with ❤️ by Felipe Avelar");
+        about_dialog.set_license_type(Gtk::LICENSE_GPL_3_0);
+        
+        // Load the logo from embedded base64 string
+        try {
+            // Decode the base64 SVG data
+            std::string svg_data = Glib::Base64::decode(LOGO_SVG_BASE64);
+            
+            // Create a stream from the decoded data
+            Glib::RefPtr<Gio::MemoryInputStream> stream = 
+                Gio::MemoryInputStream::create();
+            stream->add_data(svg_data);
+            
+            // Load the SVG from the memory stream
+            Glib::RefPtr<Gdk::Pixbuf> logo = 
+                Gdk::Pixbuf::create_from_stream_at_scale(stream, 200, 200, true);
+            
+            // Set the logo
+            about_dialog.set_logo(logo);
+            
+        } catch (const Glib::Error& ex) {
+            std::cerr << "Error loading embedded logo: " << ex.what() << std::endl;
+            // Fallback to a default icon if loading fails
+            about_dialog.set_logo_icon_name("help-about");
+        }
+        
+        // Show the dialog
+        about_dialog.run();
     }
 
 } // namespace Settings

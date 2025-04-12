@@ -77,6 +77,13 @@ namespace Settings
          * Creates the UI components for configuring general application settings.
          */
         void create_general_settings_section();
+        
+        /**
+         * @brief Create and open the about dialog
+         *
+         * Opens a dialog showing information about the application.
+         */
+        void show_about_dialog();
 
         /**
          * @brief Create the tab order configuration section
