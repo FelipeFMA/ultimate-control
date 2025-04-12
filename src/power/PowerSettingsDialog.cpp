@@ -119,7 +119,24 @@ namespace Power
 
         commands_box->pack_start(*grid, Gtk::PACK_EXPAND_WIDGET);
 
-        notebook_->append_page(*commands_box, "Commands");
+        // Helper to create a tab label with icon and text, matching main window
+        auto create_tab_label = [](const std::string &icon_name, const std::string &label_text) -> Gtk::EventBox *
+        {
+            auto event_box = Gtk::make_managed<Gtk::EventBox>();
+            auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);
+            auto icon = Gtk::make_managed<Gtk::Image>();
+            icon->set_from_icon_name(icon_name, Gtk::ICON_SIZE_SMALL_TOOLBAR);
+            auto label = Gtk::make_managed<Gtk::Label>(label_text);
+            box->pack_start(*icon, Gtk::PACK_SHRINK);
+            box->pack_start(*label, Gtk::PACK_SHRINK);
+            event_box->add(*box);
+            event_box->show_all();
+            return event_box;
+        };
+
+        // Create tab label for Commands
+        auto commands_event_box = create_tab_label("utilities-terminal-symbolic", "Commands");
+        notebook_->append_page(*commands_box, *commands_event_box);
 
         // --- Keybinds Tab ---
         auto keybinds_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 10);
@@ -192,7 +209,12 @@ namespace Power
 
         keybinds_box->pack_start(*keybinds_grid, Gtk::PACK_EXPAND_WIDGET);
 
-        notebook_->append_page(*keybinds_box, "Keybinds");
+        // Create tab label for Keybinds
+        auto keybinds_event_box = create_tab_label("input-keyboard-symbolic", "Keybinds");
+        notebook_->append_page(*keybinds_box, *keybinds_event_box);
+
+        // Ensure all notebook children (including tab labels) are visible
+        notebook_->show_all_children();
 
         // Add the notebook to the content area
         content->pack_start(*notebook_, Gtk::PACK_EXPAND_WIDGET);
