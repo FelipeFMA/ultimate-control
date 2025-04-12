@@ -280,6 +280,13 @@ namespace Power
         command_entries_["suspend"].entry.set_text("systemctl suspend");
         command_entries_["hibernate"].entry.set_text("systemctl hibernate");
         command_entries_["lock"].entry.set_text("loginctl lock-session");
+
+        // Set default keybinds for all entry fields
+        keybind_entries_["shutdown"].entry.set_text("S");
+        keybind_entries_["reboot"].entry.set_text("R");
+        keybind_entries_["suspend"].entry.set_text("U");
+        keybind_entries_["hibernate"].entry.set_text("H");
+        keybind_entries_["lock"].entry.set_text("L");
     }
 
 } // namespace Power

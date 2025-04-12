@@ -42,12 +42,12 @@ namespace Power
         commands_["hibernate"] = "systemctl hibernate";
         commands_["lock"] = "loginctl lock-session";
 
-        // Initialize default keybinds (empty by default, can be set by user)
-        keybinds_["shutdown"] = "";
-        keybinds_["reboot"] = "";
-        keybinds_["suspend"] = "";
-        keybinds_["hibernate"] = "";
-        keybinds_["lock"] = "";
+        // Initialize default keybinds (single letter)
+        keybinds_["shutdown"] = "S";
+        keybinds_["reboot"] = "R";
+        keybinds_["suspend"] = "U";
+        keybinds_["hibernate"] = "H";
+        keybinds_["lock"] = "L";
 
         // Load any existing settings from the configuration file
         load();
