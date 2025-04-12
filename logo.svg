@@ -2,10 +2,10 @@
   <!-- Engrenagem com formato tradicional e trapezóides para os dentes -->
   <g transform="translate(150, 150)">
     <!-- Base circular da engrenagem -->
-    <circle cx="0" cy="0" r="75" fill="#3c3836" stroke="#666666" stroke-width="2"/>
+    <circle cx="0" cy="0" r="75" fill="#45475a" stroke="#585b70" stroke-width="2"/>
     
     <!-- Dentes da engrenagem - 16 dentes trapezoidais mais realistas -->
-    <g fill="#2c2c2c" stroke="#666666" stroke-width="1.5">
+    <g fill="#313244" stroke="#585b70" stroke-width="1.5">
       <!-- Dente 1 -->
       <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(0)"/>
       <!-- Dente 2 -->
@@ -41,16 +41,16 @@
     </g>
     
     <!-- Anel interno para dar profundidade -->
-    <circle cx="0" cy="0" r="60" fill="#272727" stroke="#666666" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="60" fill="#585b70" stroke="#585b70" stroke-width="1.5"/>
   </g>
   
-  <!-- Letra U (verde) -->
-  <path d="M125,120 L125,170 Q125,185 140,185 L160,185 Q175,185 175,170 L175,120" fill="none" stroke="#8ec07c" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Letra U (verde - Catppuccin Mocha Green) -->
+  <path d="M125,120 L125,170 Q125,185 140,185 L160,185 Q175,185 175,170 L175,120" fill="none" stroke="#a6e3a1" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   
-  <!-- Letra C (vermelha) -->
-  <path d="M160,130 Q160,115 150,115 Q140,115 140,130 L140,160 Q140,175 150,175 Q160,175 160,160" fill="none" stroke="#fb4934" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Letra C (vermelha - Catppuccin Mocha Red) -->
+  <path d="M160,130 Q160,115 150,115 Q140,115 140,130 L140,160 Q140,175 150,175 Q160,175 160,160" fill="none" stroke="#f38ba8" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
   
   <!-- Buraco central com aparência metálica -->
-  <circle cx="150" cy="150" r="15" fill="#ebdbb2" stroke="#666666" stroke-width="2"/>
-  <circle cx="150" cy="150" r="7" fill="#504945"/>
+  <circle cx="150" cy="150" r="15" fill="#f5e0dc" stroke="#585b70" stroke-width="2"/>
+  <circle cx="150" cy="150" r="7" fill="#a6adc8"/>
 </svg>
