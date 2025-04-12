@@ -43,6 +43,11 @@ public:
 
 private:
     /**
+     * @brief Accelerator group for keyboard shortcuts (e.g. S=Shutdown, R=Reboot, U=Suspend, H=Hibernate, L=Lock)
+     */
+    Glib::RefPtr<Gtk::AccelGroup> accel_group_;
+
+    /**
      * @brief Create the system power section
      *
      * Creates the UI components for system power operations

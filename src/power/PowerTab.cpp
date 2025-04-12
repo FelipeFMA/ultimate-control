@@ -24,6 +24,17 @@ PowerTab::PowerTab()
     // Set up the main container orientation
     set_orientation(Gtk::ORIENTATION_VERTICAL);
 
+    // Create and setup accelerator group for shortcuts
+    accel_group_ = Gtk::AccelGroup::create();
+
+    // We'll add the accel group to the parent toplevel window when realized (widget shown)
+    signal_realize().connect([this]() {
+        Gtk::Window* parent = dynamic_cast<Gtk::Window*>(get_toplevel());
+        if (parent) {
+            parent->add_accel_group(accel_group_);
+        }
+    });
+
     // Add a scrolled window to contain all sections
     scrolled_window_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     pack_start(scrolled_window_, Gtk::PACK_EXPAND_WIDGET);
@@ -48,6 +59,7 @@ PowerTab::PowerTab()
     show_all_children();
     std::cout << "Power tab loaded!" << std::endl;
 }
+
 
 /**
  * @brief Destructor for the power tab
@@ -90,23 +102,27 @@ void PowerTab::create_system_section() {
     system_buttons_box_.set_spacing(15);
     system_buttons_box_.set_homogeneous(true);
 
-    // Configure the shutdown button with icon and click handler
-    shutdown_button_.set_label("Shutdown");
+    // Configure the shutdown button with icon and click handler, add shortcut hint and accelerator
+    shutdown_button_.set_label("Shutdown [S]");
     shutdown_button_.set_image_from_icon_name("system-shutdown-symbolic", Gtk::ICON_SIZE_BUTTON);
     shutdown_button_.set_always_show_image(true);
     shutdown_button_.set_tooltip_text("Power off the system");
     shutdown_button_.signal_clicked().connect([this]() {
         manager_->shutdown();
     });
+    // Accelerator: S
+    shutdown_button_.add_accelerator("clicked", accel_group_, GDK_KEY_s, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
 
-    // Configure the reboot button with icon and click handler
-    reboot_button_.set_label("Reboot");
+    // Configure the reboot button with icon and click handler, add shortcut hint and accelerator
+    reboot_button_.set_label("Reboot [R]");
     reboot_button_.set_image_from_icon_name("system-reboot-symbolic", Gtk::ICON_SIZE_BUTTON);
     reboot_button_.set_always_show_image(true);
     reboot_button_.set_tooltip_text("Restart the system");
     reboot_button_.signal_clicked().connect([this]() {
         manager_->reboot();
     });
+    // Accelerator: R
+    reboot_button_.add_accelerator("clicked", accel_group_, GDK_KEY_r, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
 
     // Add both buttons to the buttons container
     system_buttons_box_.pack_start(shutdown_button_, Gtk::PACK_EXPAND_WIDGET);
@@ -153,32 +169,39 @@ void PowerTab::create_session_section() {
     session_buttons_box_.set_spacing(15);
     session_buttons_box_.set_homogeneous(true);
 
-    // Configure the suspend button with icon and click handler
-    suspend_button_.set_label("Suspend");
+    // Configure the suspend button with icon and click handler, add shortcut hint and accelerator
+    suspend_button_.set_label("Suspend [U]");
     suspend_button_.set_image_from_icon_name("system-suspend-symbolic", Gtk::ICON_SIZE_BUTTON);
     suspend_button_.set_always_show_image(true);
     suspend_button_.set_tooltip_text("Put the system to sleep");
     suspend_button_.signal_clicked().connect([this]() {
         manager_->suspend();
     });
+    // Accelerator: U
+    suspend_button_.add_accelerator("clicked", accel_group_, GDK_KEY_u, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
 
-    // Configure the hibernate button with icon and click handler
-    hibernate_button_.set_label("Hibernate");
+    // Configure the hibernate button with icon and click handler, add shortcut hint and accelerator
+    hibernate_button_.set_label("Hibernate [H]");
     hibernate_button_.set_image_from_icon_name("system-hibernate-symbolic", Gtk::ICON_SIZE_BUTTON);
     hibernate_button_.set_always_show_image(true);
     hibernate_button_.set_tooltip_text("Hibernate the system");
     hibernate_button_.signal_clicked().connect([this]() {
         manager_->hibernate();
     });
+    // Accelerator: H
+    hibernate_button_.add_accelerator("clicked", accel_group_, GDK_KEY_h, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
 
-    // Configure the lock screen button with icon and click handler
-    lock_button_.set_label("Lock Screen");
+    // Configure the lock screen button with icon and click handler, add shortcut hint and accelerator
+    lock_button_.set_label("Lock [L]");
     lock_button_.set_image_from_icon_name("system-lock-screen-symbolic", Gtk::ICON_SIZE_BUTTON);
     lock_button_.set_always_show_image(true);
     lock_button_.set_tooltip_text("Lock the screen");
     lock_button_.signal_clicked().connect([this]() {
         std::system(manager_->get_settings()->get_command("lock").c_str());
     });
+    // Accelerator: L
+    lock_button_.add_accelerator("clicked", accel_group_, GDK_KEY_l, Gdk::ModifierType(0), Gtk::ACCEL_VISIBLE);
+
 
     // Add all three buttons to the buttons container
     session_buttons_box_.pack_start(suspend_button_, Gtk::PACK_EXPAND_WIDGET);
