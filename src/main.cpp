@@ -66,19 +66,17 @@ better_control.py     * @param floating_mode Whether to make the window float on
         if (hyprland_signature != nullptr)
         {
             std::string cmd;
-            // set the window to floating by default in hyprland
-            // this may be uncommented later if neede
 
-            // if (floating_mode)
-            // {
-            //     // Add a rule to make the window float
-            // }
-            // else
-            // {
-            //     // Remove any existing floating rule
-            //     cmd = "hyprctl --batch 'keyword windowrulev2 unset,class:^(ultimate-control)$'";
-            // }
-            cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
+            if (floating_mode)
+            {
+                // Add a rule to make the window float
+                cmd = "hyprctl --batch 'keyword windowrule float,class:^(ultimate-control)$'";
+            }
+            else
+            {
+                // Remove any existing floating rule
+                cmd = "hyprctl --batch 'keyword windowrulev2 unset,class:^(ultimate-control)$'";
+            }
             std::system(cmd.c_str());
         }
 
