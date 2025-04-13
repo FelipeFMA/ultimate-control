@@ -109,7 +109,13 @@ namespace Wifi
         // Add buttons to the controls box (connect on right, others on left)
         controls_box_.pack_end(connect_button_, Gtk::PACK_SHRINK);
         controls_box_.pack_start(forget_button_, Gtk::PACK_SHRINK);
-        controls_box_.pack_start(share_button_, Gtk::PACK_SHRINK);
+
+        // Only show the share button if the network is saved (i.e., password is available)
+        if (!manager_->get_password(network.ssid).empty())
+        {
+            controls_box_.pack_start(share_button_, Gtk::PACK_SHRINK);
+            share_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_share_clicked));
+        }
 
         // Add all components to the inner box in vertical order
         inner_box->pack_start(network_info_box_, Gtk::PACK_SHRINK);
@@ -119,7 +125,6 @@ namespace Wifi
         // Connect button click handlers
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_connect_clicked));
         forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
-        share_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_share_clicked));
 
         show_all_children();
     }
