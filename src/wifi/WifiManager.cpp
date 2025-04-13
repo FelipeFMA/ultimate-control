@@ -8,6 +8,8 @@
  */
 
 #include "WifiManager.hpp"
+#include "utils/QRCode.hpp"
+#include <filesystem>
 #include <iostream>
 #include <cstdlib>
 #include <cstdio>
@@ -781,6 +783,101 @@ namespace Wifi
 
         // Detach the thread so it can continue running after this function returns
         connect_thread_->detach();
+    }
+
+    std::string WifiManager::get_password(const std::string &ssid)
+    {
+        std::string command = "nmcli -s -g 802-11-wireless-security.psk connection show \"" + ssid + "\"";
+
+        FILE *fp = popen(command.c_str(), "r");
+        if (!fp)
+        {
+            std::cerr << "Failed to run command: " << command << std::endl;
+            return "";
+        }
+
+        char result[1024];
+        std::string password = "";
+        while (fgets(result, sizeof(result), fp) != NULL)
+        {
+            password += result;
+        }
+
+        fclose(fp);
+
+        if (!password.empty() && password.back() == '\n')
+        {
+            password.pop_back();
+        }
+
+        return password;
+    }
+
+    std::string WifiManager::generate_qr_code(const std::string &ssid, const std::string &password, const std::string &security)
+    {
+        // tmp dir for the image
+        std::filesystem::path temp_dir = "/tmp/ultimate-control";
+        std::filesystem::create_directories(temp_dir);
+
+        std::filesystem::path qr_code_path = temp_dir / (ssid + ".png");
+
+        try
+        {
+            if (std::filesystem::exists(qr_code_path))
+            {
+                std::cout << "Found QR code for " << ssid << " at " << qr_code_path << std::endl;
+                return qr_code_path.string();
+            }
+
+            std::string security_type = (security == "none" || security == "None") ? "nopass" : "WPA";
+            std::string wifi_string = "WIFI:T:" + security_type + ";S:" + ssid + ";P:" + password + ";;";
+
+            Utils::QRCode qr;
+            qr.encode(wifi_string);
+
+            int module_count = qr.getSize();
+            int scale = 7;
+            int image_size = module_count * scale;
+
+            // Create a Pixbuf for saving the image
+            GdkPixbuf *pixbuf = gdk_pixbuf_new(GDK_COLORSPACE_RGB, FALSE, 8, image_size, image_size);
+            guchar *pixels = gdk_pixbuf_get_pixels(pixbuf);
+            int rowstride = gdk_pixbuf_get_rowstride(pixbuf);
+
+            // Fill the image with qr code modules
+            for (int y = 0; y < module_count; ++y)
+            {
+                for (int x = 0; x < module_count; ++x)
+                {
+                    bool dark = qr.getModule(x, y);
+                    guchar color = dark ? 0 : 255;
+                    for (int dy = 0; dy < scale; ++dy)
+                    {
+                        for (int dx = 0; dx < scale; ++dx)
+                        {
+                            int px = x * scale + dx;
+                            int py = y * scale + dy;
+                            guchar *p = pixels + py * rowstride + px * 3;
+                            p[0] = p[1] = p[2] = color;
+                        }
+                    }
+                }
+            }
+
+            // Save the image to tmp dir
+            gdk_pixbuf_save(pixbuf, qr_code_path.c_str(), "png", nullptr, nullptr);
+            g_object_unref(pixbuf);
+
+            std::cout << "Generated QR code for " << ssid << " at " << qr_code_path << std::endl;
+            return qr_code_path.string();
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Failed to generate QR code for " << ssid << ": " << e.what() << std::endl;
+
+            // Return error image path
+            return std::filesystem::absolute("src/css/error.png").string();
+        }
     }
 
 } // namespace Wifi

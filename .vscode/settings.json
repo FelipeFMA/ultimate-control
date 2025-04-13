@@ -14,5 +14,6 @@
         "*.cpp": "cpp"
     },
     "cmake.configureOnOpen": true,
-    "cmake.buildDirectory": "${workspaceFolder}/build"
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "C_Cpp.errorSquiggles": "disabled"
 }
