@@ -22,17 +22,6 @@ namespace Wifi
         : manager_(std::make_shared<WifiManager>()), // Create WiFi manager
           container_(Gtk::ORIENTATION_VERTICAL, 10)  // Vertical container for network widgets
     {
-        // Add css
-        auto css_provider = Gtk::CssProvider::create();
-        css_provider->load_from_file(Gio::File::create_for_path("src/css/style.css"));
-
-        auto screen = Gdk::Screen::get_default();
-        Gtk::StyleContext::add_provider_for_screen(
-            screen,
-            css_provider,
-            GTK_STYLE_PROVIDER_PRIORITY_USER
-        );
-
         // Set scrolling policy for the main window
         set_policy(Gtk::POLICY_AUTOMATIC, Gtk::POLICY_AUTOMATIC);
 
