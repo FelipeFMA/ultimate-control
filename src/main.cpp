@@ -66,6 +66,7 @@ better_control.py     * @param floating_mode Whether to make the window float on
         if (hyprland_signature != nullptr)
         {
             std::string cmd;
+
             if (floating_mode)
             {
                 // Add a rule to make the window float

@@ -16,6 +16,7 @@
 #include <thread>
 #include <mutex>
 #include <glibmm/dispatcher.h>
+#include "utils/QRCode.hpp"
 
 /**
  * @namespace Wifi
@@ -157,6 +158,10 @@ namespace Wifi
          * Returns the most recent scan results. Call scan_networks() first to update the list.
          */
         const NetworkList &get_networks() const;
+
+        std::string get_password(const std::string &ssid);
+
+        std::string generate_qr_code(const std::string &ssid, const std::string &password, const std::string &security);
 
     private:
         class Impl;                  ///< Forward declaration of implementation class

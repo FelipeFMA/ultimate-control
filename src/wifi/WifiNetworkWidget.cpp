@@ -50,11 +50,10 @@ namespace Wifi
         pack_start(*frame, Gtk::PACK_EXPAND_WIDGET);
 
         // Create a vertical box inside the frame with padding
-        Gtk::Box *inner_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 8));
+        Gtk::Box *inner_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 4));
         inner_box->set_margin_start(10);
         inner_box->set_margin_end(10);
-        inner_box->set_margin_top(10);
-        inner_box->set_margin_bottom(10);
+        inner_box->get_style_context()->add_class("inner-box");
         frame->add(*inner_box);
 
         // Initialize the icons based on network properties
@@ -207,7 +206,7 @@ namespace Wifi
     {
         if (connected)
         {
-            status_icon_.set_from_icon_name("network-wireless-connected-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+            status_icon_.set_from_icon_name("emblem-ok-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
             status_icon_.set_tooltip_text("Connected");
         }
         else
@@ -415,42 +414,37 @@ namespace Wifi
     {
         // Store the target SSID for later reference
         std::string target_ssid = network_.ssid;
+        // std::string target_password = network_.;
 
         // Create a dialog window to display the QR code
         Gtk::Dialog dialog("Share WiFi Network", *dynamic_cast<Gtk::Window *>(get_toplevel()), true);
-        dialog.set_default_size(350, 400);
+        dialog.set_default_size(0, 0);
         dialog.set_border_width(10);
 
         // Create a vertical box for the dialog content with padding
         Gtk::Box *content_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 10));
         content_box->set_border_width(10);
 
-        // Add WiFi icon and network name in the header
-        Gtk::Box *header_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 10));
-        Gtk::Image *wifi_icon = Gtk::manage(new Gtk::Image());
-        wifi_icon->set_from_icon_name("network-wireless-symbolic", Gtk::ICON_SIZE_DIALOG);
-        header_box->pack_start(*wifi_icon, Gtk::PACK_SHRINK);
-
-        Gtk::Label *network_label = Gtk::manage(new Gtk::Label());
-        network_label->set_markup("<span size='large'><b>" + target_ssid + "</b></span>");
-        network_label->set_halign(Gtk::ALIGN_START);
-        header_box->pack_start(*network_label, Gtk::PACK_SHRINK);
-
-        content_box->pack_start(*header_box, Gtk::PACK_SHRINK);
+        // Add header bar at the top with default close button
+        Gtk::HeaderBar *header_bar = Gtk::manage(new Gtk::HeaderBar());
+        ;
+        header_bar->set_show_close_button(true);
+        header_bar->set_title("Share Network");
+        dialog.set_titlebar(*header_bar);
 
         // Add a horizontal separator line
         Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
         content_box->pack_start(*separator, Gtk::PACK_SHRINK);
 
-        // Create a drawing area widget for rendering the QR code
-        Gtk::DrawingArea *drawing_area = Gtk::manage(new Gtk::DrawingArea());
-        drawing_area->set_size_request(300, 300);
+        // Add a box for qr secttion
+        Gtk::Box *qr_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 10));
+        qr_box->set_margin_bottom(10);
 
         // Initialize the QR code generator with medium error correction
         Utils::QRCode qrcode(Utils::QRCode::Version::V3, Utils::QRCode::ErrorCorrection::M);
 
         // Get password for secured networks if not already connected
-        std::string password;
+        std::string password = manager_->get_password(target_ssid);
         if (network_.secured && !network_.connected)
         {
             // Create a password entry dialog
@@ -489,46 +483,76 @@ namespace Wifi
 
         // Format the WiFi network information for the QR code
         std::string auth_type = network_.secured ? "WPA" : "nopass";
-        std::string qr_data = Utils::QRCode::formatWifiNetwork(target_ssid, password, false, auth_type);
 
-        // Encode the WiFi data into the QR code
-        qrcode.encode(qr_data);
+        std::string qr_path = manager_->generate_qr_code(target_ssid, password, auth_type);
 
-        // Set up the drawing handler to render the QR code when the area is exposed
-        drawing_area->signal_draw().connect([&qrcode, drawing_area](const Cairo::RefPtr<Cairo::Context> &cr) -> bool
-                                            {
-        Gtk::Allocation allocation = drawing_area->get_allocation();
-        const int width = allocation.get_width();
-        const int height = allocation.get_height();
-        const int size = std::min(width, height);
+        Gtk::Button *qr_button = Gtk::manage(new Gtk::Button());
+        qr_button->set_size_request(86, 86);
+        qr_button->set_relief(Gtk::RELIEF_NONE);
+        qr_button->get_style_context()->add_class("qr_image_holder");
+        qr_box->pack_start(*qr_button, Gtk::PACK_SHRINK, 0);
 
-        // Center the QR code in the drawing area
-        double x = (width - size) / 2.0;
-        double y = (height - size) / 2.0;
+        if (!qr_path.empty())
+        {
+            Gtk::Image *qr_image = Gtk::manage(new Gtk::Image(qr_path));
+            qr_image->set_pixel_size(84);
 
-        // Fill the background with white
-        cr->set_source_rgb(1.0, 1.0, 1.0); // White
-        cr->paint();
+            qr_button->add(*qr_image);
+        }
 
-        // Draw the QR code in black
-        cr->set_source_rgb(0.0, 0.0, 0.0); // Black
-        qrcode.draw(cr, x, y, size);
+        Gtk::Label *scan_label = Gtk::manage(new Gtk::Label("Scan to connect"));
+        scan_label->get_style_context()->add_class("scan_label");
+        qr_box->pack_start(*scan_label, Gtk::PACK_SHRINK);
 
-        return true; });
+        content_box->pack_start(*qr_box, Gtk::PACK_SHRINK);
 
-        content_box->pack_start(*drawing_area, Gtk::PACK_EXPAND_WIDGET);
+        // Add details about wifi
+        Gtk::Box *network_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 3));
+        network_box->set_margin_top(1);
 
-        // Add instructions for using the QR code
-        Gtk::Label *instructions = Gtk::manage(new Gtk::Label("Scan this QR code with a phone camera\nor WiFi configuration app to connect"));
-        instructions->set_line_wrap(true);
-        content_box->pack_start(*instructions, Gtk::PACK_SHRINK);
+        Gtk::Box *ssid_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+        ssid_box->set_size_request(320, 50);
+        ssid_box->get_style_context()->add_class("ssid-box");
+
+        // Network name
+        Gtk::Label *ssid_label = Gtk::manage(new Gtk::Label());
+        ssid_label->set_markup("<b>Network name </b>");
+        ssid_label->set_halign(Gtk::Align::ALIGN_START);
+        ssid_label->get_style_context()->add_class("dimmed-label");
+
+        Gtk::Label *ssid_name = Gtk::manage(new Gtk::Label());
+        ssid_name->set_markup("<b>" + target_ssid + "</b>");
+        ssid_name->set_halign(Gtk::Align::ALIGN_START);
+
+        // Add both Network name/ssids in the box
+        ssid_box->pack_start(*ssid_label, Gtk::PACK_SHRINK);
+        ssid_box->pack_start(*ssid_name, Gtk::PACK_SHRINK);
+
+        // Passwd box
+        Gtk::Box *passwd_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL));
+        passwd_box->set_size_request(320, 50);
+        passwd_box->get_style_context()->add_class("passwd-box");
+
+        // Network secret
+        Gtk::Label *passwd_label = Gtk::manage(new Gtk::Label());
+        passwd_label->set_markup("<b>Password</b>");
+        passwd_label->set_halign(Gtk::Align::ALIGN_START);
+        passwd_label->get_style_context()->add_class("dimmed-label");
+
+        Gtk::Label *passwd = Gtk::manage(new Gtk::Label());
+        passwd->set_markup("<b>" + password + "</b>");
+        passwd->set_halign(Gtk::Align::ALIGN_START);
+
+        passwd_box->pack_start(*passwd_label, Gtk::PACK_SHRINK);
+        passwd_box->pack_start(*passwd, Gtk::PACK_SHRINK);
+
+        network_box->pack_start(*ssid_box, Gtk::PACK_SHRINK);
+        network_box->pack_start(*passwd_box, Gtk::PACK_SHRINK);
+
+        content_box->pack_start(*network_box, Gtk::PACK_SHRINK);
 
         // Add the complete content box to the dialog
         dialog.get_content_area()->pack_start(*content_box, Gtk::PACK_EXPAND_WIDGET);
-
-        // Add a close button to dismiss the dialog
-        dialog.add_button("Close", Gtk::RESPONSE_CLOSE);
-        dialog.set_default_response(Gtk::RESPONSE_CLOSE);
 
         // Show all widgets and run the dialog modally
         dialog.show_all_children();

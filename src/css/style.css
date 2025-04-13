@@ -1,0 +1,30 @@
+.inner-box{
+    padding: 4px;
+}
+
+.qr_image_holder{
+    background: transparent;
+    border-radius: 12px;
+}
+.scan_label{
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.ssid-box{
+    background: @wm_button_unfocused_bg;
+    border-radius: 6px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    padding: 10px;
+}
+.dimmed-label{
+    opacity: 0.5;
+}
+.passwd-box{
+    background: @wm_button_unfocused_bg;
+    border-radius: 6px;
+    border-top-right-radius: 0px;
+    border-top-left-radius: 0px;
+    padding: 10px;
+}
