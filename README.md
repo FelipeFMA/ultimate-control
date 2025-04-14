@@ -58,8 +58,7 @@ Ultimate Control is a GTK-based application that provides a unified interface fo
 
 ![image](https://github.com/user-attachments/assets/37b685a6-0f84-4c27-b521-7f70518b5612)
 
-![Bluetooth Tab](https://github.com/user-attachments/assets/bluetooth-tab-screenshot.png)
-
+![image](https://github.com/user-attachments/assets/55494454-c388-4245-987e-8d6c59c60c4a)
 
 ## 📥 Installation
 
