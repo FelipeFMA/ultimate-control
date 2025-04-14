@@ -159,6 +159,14 @@ namespace Wifi
          */
         const NetworkList &get_networks() const;
 
+        /**
+         * @brief Check if ethernet is connected
+         * @return true if ethernet is connected, false otherwise
+         *
+         * Uses nmcli to check if any ethernet device is connected and active.
+         */
+        bool is_ethernet_connected() const;
+
         std::string get_password(const std::string &ssid);
 
         std::string generate_qr_code(const std::string &ssid, const std::string &password, const std::string &security);

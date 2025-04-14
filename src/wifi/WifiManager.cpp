@@ -813,6 +813,33 @@ namespace Wifi
         return password;
     }
 
+    /**
+     * @brief Check if ethernet is connected
+     * @return true if ethernet is connected, false otherwise
+     *
+     * Uses nmcli to check if any ethernet device is connected and active.
+     */
+    bool WifiManager::is_ethernet_connected() const
+    {
+        std::string cmd = "nmcli -t -f TYPE,STATE device | grep ethernet:connected";
+        std::array<char, 128> buffer;
+        std::string result;
+
+        FILE *pipe = popen(cmd.c_str(), "r");
+        if (!pipe)
+            return false;
+
+        bool connected = false;
+        if (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+        {
+            // If we got any output, ethernet is connected
+            connected = true;
+        }
+        pclose(pipe);
+
+        return connected;
+    }
+
     std::string WifiManager::generate_qr_code(const std::string &ssid, const std::string &password, const std::string &security)
     {
         // tmp dir for the image

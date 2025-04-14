@@ -79,9 +79,23 @@ namespace Wifi
         // Add a horizontal separator below the header
         Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
 
+        // Create ethernet status box
+        Gtk::Box *ethernet_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
+        ethernet_box->set_margin_bottom(10);
+
+        // Set up ethernet icon
+        ethernet_status_icon_.set_from_icon_name("network-wired-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+        ethernet_box->pack_start(ethernet_status_icon_, Gtk::PACK_SHRINK);
+
+        // Set up ethernet status label
+        ethernet_status_label_.set_text("You are connected to ethernet");
+        ethernet_status_label_.set_halign(Gtk::ALIGN_START);
+        ethernet_box->pack_start(ethernet_status_label_, Gtk::PACK_SHRINK);
+
         // Add header and separator to the top of the main box
         main_box->pack_start(*header_box, Gtk::PACK_SHRINK);
         main_box->pack_start(*separator, Gtk::PACK_SHRINK);
+        main_box->pack_start(*ethernet_box, Gtk::PACK_SHRINK);
 
         // Create a scrolled window to contain the network list
         Gtk::ScrolledWindow *networks_scroll = Gtk::manage(new Gtk::ScrolledWindow());
@@ -102,6 +116,8 @@ namespace Wifi
         Glib::signal_timeout().connect_once([this]() {
             scan_button_.set_sensitive(true);
             scan_button_.set_label("Scan");
+            // Update ethernet status when scan completes
+            update_ethernet_status();
         }, 2000); });
 
         // Connect WiFi switch toggle handler
@@ -117,6 +133,9 @@ namespace Wifi
 
         // Initialize UI based on current WiFi state
         update_wifi_state(manager_->is_wifi_enabled());
+
+        // Initialize ethernet status
+        update_ethernet_status();
 
         // Show a loading message initially instead of scanning immediately
         loading_label_ = Gtk::manage(new Gtk::Label("Loading networks..."));
@@ -159,6 +178,30 @@ namespace Wifi
         else
         {
             wifi_status_icon_.set_from_icon_name("network-wireless-disabled-symbolic", Gtk::ICON_SIZE_DIALOG);
+        }
+    }
+
+    /**
+     * @brief Update the ethernet connection status display
+     *
+     * Checks if ethernet is connected and updates the status message and icon accordingly.
+     */
+    void WifiTab::update_ethernet_status()
+    {
+        bool ethernet_connected = manager_->is_ethernet_connected();
+
+        if (ethernet_connected)
+        {
+            ethernet_status_icon_.set_from_icon_name("network-wired-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
+            ethernet_status_label_.set_text("You are connected to ethernet");
+            ethernet_status_icon_.show();
+            ethernet_status_label_.show();
+        }
+        else
+        {
+            // Hide the ethernet status when not connected
+            ethernet_status_icon_.hide();
+            ethernet_status_label_.hide();
         }
     }
 
@@ -224,11 +267,11 @@ namespace Wifi
         { // Create widgets for each detected network
             // Keep the conneced wifi at the top
             std::vector<Network> sorted_networks = networks;
-            std::sort(sorted_networks.begin(), sorted_networks.end(), [](const Network &a, const Network &b) {
+            std::sort(sorted_networks.begin(), sorted_networks.end(), [](const Network &a, const Network &b)
+                      {
                 if(a.connected != b.connected)
                     return a.connected;
-                return a.ssid < b.ssid;
-            });
+                return a.ssid < b.ssid; });
             for (const auto &net : sorted_networks)
             {
                 auto widget = std::make_unique<WifiNetworkWidget>(net, manager_);
@@ -236,6 +279,9 @@ namespace Wifi
                 widgets_.push_back(std::move(widget));
             }
         }
+
+        // Update ethernet status when network list is refreshed
+        update_ethernet_status();
 
         show_all_children();
     }
@@ -269,7 +315,9 @@ namespace Wifi
             Glib::signal_timeout().connect_once([this]()
                                                 {
             scan_button_.set_sensitive(true);
-            scan_button_.set_label("Scan"); }, 2000);
+            scan_button_.set_label("Scan");
+            // Update ethernet status
+            update_ethernet_status(); }, 2000);
         }
     }
 
