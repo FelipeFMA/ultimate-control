@@ -222,7 +222,14 @@ namespace Wifi
         }
         else
         { // Create widgets for each detected network
-            for (const auto &net : networks)
+            // Keep the conneced wifi at the top
+            std::vector<Network> sorted_networks = networks;
+            std::sort(sorted_networks.begin(), sorted_networks.end(), [](const Network &a, const Network &b) {
+                if(a.connected != b.connected)
+                    return a.connected;
+                return a.ssid < b.ssid;
+            });
+            for (const auto &net : sorted_networks)
             {
                 auto widget = std::make_unique<WifiNetworkWidget>(net, manager_);
                 container_.pack_start(*widget, Gtk::PACK_SHRINK);

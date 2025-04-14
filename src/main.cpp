@@ -919,7 +919,7 @@ int main(int argc, char *argv[])
     }
 
     // Initialize GTK application with unique identifier
-    auto app = Gtk::Application::create(argc, argv, "com.example.ultimatecontrol");
+    auto app = Gtk::Application::create(argc, argv, "com.felipefma.ultimatecontrol");
 
     // Create the main window with the initial tab, minimal mode, and floating mode settings
     MainWindow window(initial_tab, minimal_opt, floating_opt);
