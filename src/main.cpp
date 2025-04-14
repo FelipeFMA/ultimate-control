@@ -19,6 +19,7 @@
 #include <glibmm/dispatcher.h>
 #include "volume/VolumeTab.hpp"
 #include "wifi/WifiTab.hpp"
+#include "bluetooth/BluetoothTab.hpp"
 #include "display/DisplayTab.hpp"
 #include "power/PowerTab.hpp"
 #include "settings/SettingsWindow.hpp"
@@ -306,6 +307,10 @@ private:
             else if (tab_id == "wifi")
             {
                 add_tab(tab_id, placeholder, "network-wireless-symbolic", "WiFi");
+            }
+            else if (tab_id == "bluetooth")
+            {
+                add_tab(tab_id, placeholder, "bluetooth-active-symbolic", "Bluetooth");
             }
             else if (tab_id == "display")
             {
@@ -683,6 +688,12 @@ private:
                 content = Gtk::make_managed<Wifi::WifiTab>();
                 icon_name = "network-wireless-symbolic";
                 label_text = "WiFi";
+            }
+            else if (id == "bluetooth")
+            {
+                content = Gtk::make_managed<Bluetooth::BluetoothTab>();
+                icon_name = "bluetooth-active-symbolic";
+                label_text = "Bluetooth";
             }
             else if (id == "display")
             {
