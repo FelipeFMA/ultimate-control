@@ -559,6 +559,11 @@ private:
             icon_name = "network-wireless-symbolic";
             label_text = "WiFi";
         }
+        else if (id == "bluetooth")
+        {
+            icon_name = "bluetooth-active-symbolic";
+            label_text = "Bluetooth";
+        }
         else if (id == "display")
         {
             icon_name = "video-display-symbolic";
@@ -826,6 +831,7 @@ int main(int argc, char *argv[])
     // Variables to store command-line option values
     bool volume_opt = false;
     bool wifi_opt = false;
+    bool bluetooth_opt = false;
     bool display_opt = false;
     bool power_opt = false;
     bool settings_opt = false;
@@ -844,6 +850,12 @@ int main(int argc, char *argv[])
     wifi_entry.set_short_name('w');
     wifi_entry.set_description("Start with the WiFi tab selected");
     group.add_entry(wifi_entry, wifi_opt);
+
+    Glib::OptionEntry bluetooth_entry;
+    bluetooth_entry.set_long_name("bluetooth");
+    bluetooth_entry.set_short_name('b');
+    bluetooth_entry.set_description("Start with the Bluetooth tab selected");
+    group.add_entry(bluetooth_entry, bluetooth_opt);
 
     Glib::OptionEntry display_entry;
     display_entry.set_long_name("display");
@@ -897,6 +909,10 @@ int main(int argc, char *argv[])
     else if (wifi_opt)
     {
         initial_tab = "wifi";
+    }
+    else if (bluetooth_opt)
+    {
+        initial_tab = "bluetooth";
     }
     else if (display_opt)
     {
