@@ -8,6 +8,7 @@
 
 #include "BluetoothTab.hpp"
 #include <iostream>
+#include <algorithm>
 
 namespace Bluetooth
 {
@@ -164,7 +165,15 @@ namespace Bluetooth
         }
         else
         {
-            for (const auto &dev : devices)
+            // Sort devices to keep connected ones at the top
+            std::vector<Device> sorted_devices = devices;
+            std::sort(sorted_devices.begin(), sorted_devices.end(), [](const Device &a, const Device &b)
+                      {
+                if(a.connected != b.connected)
+                    return a.connected;
+                return a.name < b.name; });
+
+            for (const auto &dev : sorted_devices)
             {
                 auto widget = std::make_unique<BluetoothDeviceWidget>(dev, manager_);
                 container_.pack_start(*widget, Gtk::PACK_SHRINK);
