@@ -30,6 +30,14 @@ Ultimate Control is a GTK-based application that provides a unified interface fo
 - Share network details via QR codes
 - Forget saved networks
 
+### 🔵 Bluetooth Management
+- Scan for and discover nearby Bluetooth devices
+- Connect to paired and new Bluetooth devices
+- Display signal strength with intuitive icons
+- Connected devices appear at the top with check marks
+- Forget paired devices with a single click
+- Toggle Bluetooth on/off with a convenient switch
+
 ### 🖥️ Display Settings
 - Adjust screen brightness with real-time feedback
 - Control blue light filter (color temperature)
@@ -50,6 +58,8 @@ Ultimate Control is a GTK-based application that provides a unified interface fo
 
 ![image](https://github.com/user-attachments/assets/37b685a6-0f84-4c27-b521-7f70518b5612)
 
+![Bluetooth Tab](https://github.com/user-attachments/assets/bluetooth-tab-screenshot.png)
+
 
 ## 📥 Installation
 
@@ -60,6 +70,7 @@ Ultimate Control requires the following dependencies:
 - gtkmm-3.0
 - CMake 3.10 or later
 - C++17 compatible compiler
+- BlueZ (for Bluetooth functionality)
 
 ### Building from Source
 
@@ -104,6 +115,13 @@ Ultimate Control provides an intuitive tabbed interface for managing various sys
 - Use "Forget" to remove saved networks
 - Share network details via QR code
 
+### Bluetooth Tab
+- Toggle Bluetooth on/off with the switch
+- Click "Scan" to discover nearby devices
+- Click "Connect" to pair and connect to devices
+- Use "Forget" to remove paired devices
+- Connected devices appear at the top with check marks
+
 ### Display Tab
 - Adjust screen brightness with the slider
 - Control blue light filter intensity
@@ -124,6 +142,7 @@ Usage: ultimate-control [OPTIONS]
 Options:
   -v, --volume    Start with the Volume tab selected
   -w, --wifi      Start with the WiFi tab selected
+  -b, --bluetooth Start with the Bluetooth tab selected
   -d, --display   Start with the Display tab selected
   -p, --power     Start with the Power tab selected
   -s, --settings  Start with the Settings tab selected
@@ -136,6 +155,9 @@ Options:
 ```bash
 # Start with WiFi tab
 ultimate-control --wifi
+
+# Start with Bluetooth tab
+ultimate-control --bluetooth
 
 # Start with Power tab in minimal mode
 ultimate-control -p -m
@@ -163,6 +185,7 @@ ultimate-control/
 │   ├── core/                    # Core functionality
 │   ├── volume/                  # Volume control module
 │   ├── wifi/                    # WiFi management module
+│   ├── bluetooth/               # Bluetooth management module
 │   ├── display/                 # Display settings module
 │   ├── power/                   # Power management module
 │   ├── settings/                # Application settings
