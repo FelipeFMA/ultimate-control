@@ -14,6 +14,9 @@
 #include <cstdio>
 #include <memory>
 #include <array>
+#include <thread>
+#include <future>
+#include <gtkmm.h>
 
 namespace Volume
 {
@@ -228,25 +231,36 @@ namespace Volume
         /**
          * @brief Set a device as the default for its type (input or output)
          * @param sink_name The name of the device to set as default
+         *
+         * Runs asynchronously to avoid freezing the UI while changing the default device
          */
         void set_default_device(const std::string &sink_name)
         {
-            std::string cmd;
-            if (sink_name.find("input") != std::string::npos || sink_name.find("source") != std::string::npos)
-            {
-                cmd = "pactl set-default-source " + sink_name;
-            }
-            else
-            {
-                cmd = "pactl set-default-sink " + sink_name;
-            }
-            int ret = std::system(cmd.c_str());
-            if (ret != 0)
-            {
-                std::cerr << "Failed to set default device for " << sink_name << std::endl;
-            }
-            // Refresh the device list to update the default status
-            refresh_sinks();
+            // Create a new thread to handle the default device change
+            std::thread([this, sink_name]()
+                        {
+                std::string cmd;
+                if (sink_name.find("input") != std::string::npos || sink_name.find("source") != std::string::npos)
+                {
+                    cmd = "pactl set-default-source " + sink_name;
+                }
+                else
+                {
+                    cmd = "pactl set-default-sink " + sink_name;
+                }
+
+                int ret = std::system(cmd.c_str());
+                if (ret != 0)
+                {
+                    std::cerr << "Failed to set default device for " << sink_name << std::endl;
+                }
+
+                // Schedule the refresh on the main thread using Glib::idle
+                // This ensures UI updates happen safely from the main thread
+                Glib::signal_idle().connect_once([this]() {
+                    refresh_sinks();
+                }); })
+                .detach(); // Detach the thread so it runs independently
         }
 
     private:

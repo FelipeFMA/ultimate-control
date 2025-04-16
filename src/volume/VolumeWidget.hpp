@@ -76,6 +76,7 @@ namespace Volume
         std::shared_ptr<VolumeManager> manager_; ///< Volume manager for audio operations
         std::string sink_name_;                  ///< Name of the audio device
         bool is_input_device_;                   ///< Whether this is an input device (mic) or output (speaker)
+        bool is_default_;                        ///< Whether this device is currently the default
 
         Gtk::Box device_box_;            ///< Container for device icon and name
         Gtk::Box control_box_;           ///< Container for volume controls

@@ -24,6 +24,7 @@ namespace Volume
           manager_(std::move(manager)),                                                                                    // Store volume manager
           sink_name_(sink.name),                                                                                           // Store device name
           is_input_device_(sink.name.find("input") != std::string::npos || sink.name.find("source") != std::string::npos), // Determine device type
+          is_default_(sink.is_default),                                                                                    // Store default device status
           device_box_(Gtk::ORIENTATION_HORIZONTAL, 5),                                                                     // Horizontal box for device info
           control_box_(Gtk::ORIENTATION_HORIZONTAL, 10),                                                                   // Horizontal box for controls
           default_box_(Gtk::ORIENTATION_HORIZONTAL, 5),                                                                    // Horizontal box for default device checkbox
@@ -205,12 +206,36 @@ namespace Volume
      * @brief Handler for default device check button toggles
      *
      * Sets this device as the default device for its type when checked.
+     * If the user tries to uncheck it, we prevent that since a default device
+     * must always be selected.
      */
     void VolumeWidget::on_default_toggled()
     {
+        // If this is already the default device and user tries to uncheck it,
+        // prevent that by setting it back to checked
+        if (!default_check_.get_active() && is_default_)
+        {
+            // Block the signal handler temporarily to avoid recursion
+            sigc::connection conn = default_check_.signal_toggled().connect(
+                sigc::slot<void>([this]()
+                                 {
+                                     // Do nothing, just blocking the normal handler
+                                 }));
+
+            // Set it back to checked
+            default_check_.set_active(true);
+
+            // Unblock the signal handler
+            conn.disconnect();
+
+            return;
+        }
+
+        // If user is setting this as default
         if (default_check_.get_active())
         {
             manager_->set_default_device(sink_name_);
+            is_default_ = true;
         }
     }
 
