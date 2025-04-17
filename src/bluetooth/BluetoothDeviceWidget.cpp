@@ -84,16 +84,22 @@ namespace Bluetooth
         // Connect/disconnect button
         if (device_.connected)
         {
+            connect_button_.set_image_from_icon_name("application-exit-symbolic", Gtk::ICON_SIZE_BUTTON);
             connect_button_.set_label("Disconnect");
         }
         else
         {
+            connect_button_.set_image_from_icon_name("insert-link-symbolic", Gtk::ICON_SIZE_BUTTON);
             connect_button_.set_label("Connect");
         }
+        connect_button_.set_always_show_image(true);
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &BluetoothDeviceWidget::on_connect_clicked));
 
         // Forget button (only for paired devices)
+        forget_button_.set_image_from_icon_name("user-trash-symbolic", Gtk::ICON_SIZE_BUTTON);
         forget_button_.set_label("Forget");
+        forget_button_.set_tooltip_text("Forget this device");
+        forget_button_.set_always_show_image(true);
         forget_button_.set_sensitive(device_.paired);
         forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &BluetoothDeviceWidget::on_forget_clicked));
 
