@@ -44,17 +44,12 @@ namespace Wifi
         set_margin_top(8);
         set_margin_bottom(8);
 
-        // Add a frame around the widget for visual separation between networks
-        Gtk::Frame *frame = Gtk::manage(new Gtk::Frame());
-        frame->set_shadow_type(Gtk::SHADOW_ETCHED_IN);
-        pack_start(*frame, Gtk::PACK_EXPAND_WIDGET);
-
-        // Create a vertical box inside the frame with padding
+        // Create a vertical box for network content with padding
         Gtk::Box *inner_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 4));
         inner_box->set_margin_start(10);
         inner_box->set_margin_end(10);
         inner_box->get_style_context()->add_class("inner-box");
-        frame->add(*inner_box);
+        pack_start(*inner_box, Gtk::PACK_EXPAND_WIDGET);
 
         // Initialize the icons based on network properties
         update_signal_icon(network.signal_strength);
@@ -128,6 +123,11 @@ namespace Wifi
         // Connect button click handlers
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_connect_clicked));
         forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
+
+        // Add a subtle separator at the bottom for visual separation between networks
+        Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
+        separator->set_margin_top(8);
+        pack_start(*separator, Gtk::PACK_SHRINK);
 
         show_all_children();
     }

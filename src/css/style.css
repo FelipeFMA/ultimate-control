@@ -1,27 +1,36 @@
-.inner-box{
-    padding: 4px;
+.inner-box {
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
 
-.qr_image_holder{
+.inner-box:hover {
+    background-color: rgba(128, 128, 128, 0.1);
+}
+
+.qr_image_holder {
     background: transparent;
     border-radius: 12px;
 }
-.scan_label{
+
+.scan_label {
     font-size: 18px;
     font-weight: bold;
 }
 
-.ssid-box{
+.ssid-box {
     background: @wm_button_unfocused_bg;
     border-radius: 6px;
     border-bottom-right-radius: 0px;
     border-bottom-left-radius: 0px;
     padding: 10px;
 }
-.dimmed-label{
+
+.dimmed-label {
     opacity: 0.5;
 }
-.passwd-box{
+
+.passwd-box {
     background: @wm_button_unfocused_bg;
     border-radius: 6px;
     border-top-right-radius: 0px;
