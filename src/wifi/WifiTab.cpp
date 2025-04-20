@@ -79,23 +79,26 @@ namespace Wifi
         // Add a horizontal separator below the header
         Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
 
-        // Create ethernet status box
-        Gtk::Box *ethernet_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
-        ethernet_box->set_margin_bottom(10);
+        // Create ethernet status box but don't add it to the UI yet
+        // It will only be added if Ethernet is actually connected
+        ethernet_box_ = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
+        ethernet_box_->set_margin_bottom(10);
 
         // Set up ethernet icon
         ethernet_status_icon_.set_from_icon_name("network-wired-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-        ethernet_box->pack_start(ethernet_status_icon_, Gtk::PACK_SHRINK);
+        ethernet_box_->pack_start(ethernet_status_icon_, Gtk::PACK_SHRINK);
 
         // Set up ethernet status label
         ethernet_status_label_.set_text("You are connected to ethernet");
         ethernet_status_label_.set_halign(Gtk::ALIGN_START);
-        ethernet_box->pack_start(ethernet_status_label_, Gtk::PACK_SHRINK);
+        ethernet_box_->pack_start(ethernet_status_label_, Gtk::PACK_SHRINK);
 
         // Add header and separator to the top of the main box
         main_box->pack_start(*header_box, Gtk::PACK_SHRINK);
         main_box->pack_start(*separator, Gtk::PACK_SHRINK);
-        main_box->pack_start(*ethernet_box, Gtk::PACK_SHRINK);
+
+        // Store main_box for later use when adding ethernet status
+        main_box_ = main_box;
 
         // Create a scrolled window to contain the network list
         Gtk::ScrolledWindow *networks_scroll = Gtk::manage(new Gtk::ScrolledWindow());
@@ -188,21 +191,40 @@ namespace Wifi
      */
     void WifiTab::update_ethernet_status()
     {
-        bool ethernet_connected = manager_->is_ethernet_connected();
+        // Check Ethernet status asynchronously to avoid UI freezing
+        Glib::Thread::create(
+            [this]()
+            {
+                bool ethernet_connected = manager_->is_ethernet_connected();
 
-        if (ethernet_connected)
-        {
-            ethernet_status_icon_.set_from_icon_name("network-wired-symbolic", Gtk::ICON_SIZE_SMALL_TOOLBAR);
-            ethernet_status_label_.set_text("You are connected to ethernet");
-            ethernet_status_icon_.show();
-            ethernet_status_label_.show();
-        }
-        else
-        {
-            // Hide the ethernet status when not connected
-            ethernet_status_icon_.hide();
-            ethernet_status_label_.hide();
-        }
+                // Use Glib::signal_idle to update UI from the main thread
+                Glib::signal_idle().connect_once(
+                    [this, ethernet_connected]()
+                    {
+                        if (ethernet_connected)
+                        {
+                            // Only add the ethernet box to the UI if it's not already there
+                            if (!ethernet_box_added_)
+                            {
+                                // Add ethernet box after the separator but before the network list
+                                main_box_->pack_start(*ethernet_box_, Gtk::PACK_SHRINK);
+                                main_box_->reorder_child(*ethernet_box_, 2); // Position after header and separator
+                                ethernet_box_->show_all();
+                                ethernet_box_added_ = true;
+                            }
+                        }
+                        else
+                        {
+                            // Remove ethernet box from UI if it was previously added
+                            if (ethernet_box_added_)
+                            {
+                                main_box_->remove(*ethernet_box_);
+                                ethernet_box_added_ = false;
+                            }
+                        }
+                    });
+            },
+            false); // non-joinable thread
     }
 
     /**

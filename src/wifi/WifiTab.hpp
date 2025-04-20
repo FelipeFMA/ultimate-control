@@ -91,6 +91,9 @@ namespace Wifi
         Gtk::Image wifi_status_icon_;                             ///< Icon showing WiFi status
         Gtk::Label ethernet_status_label_;                        ///< Label showing ethernet connection status
         Gtk::Image ethernet_status_icon_;                         ///< Icon showing ethernet connection status
+        Gtk::Box *ethernet_box_ = nullptr;                        ///< Container for ethernet status
+        Gtk::Box *main_box_ = nullptr;                            ///< Main container for all UI elements
+        bool ethernet_box_added_ = false;                         ///< Flag to track if ethernet box is in the UI
         std::vector<std::unique_ptr<WifiNetworkWidget>> widgets_; ///< List of network widgets
         bool initial_scan_performed_ = false;                     ///< Flag to track if initial scan has been done
         Gtk::Label *loading_label_ = nullptr;                     ///< Loading message shown before networks are loaded
