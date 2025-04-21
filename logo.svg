@@ -2,10 +2,10 @@
   <!-- Engrenagem com formato tradicional e trapezóides para os dentes -->
   <g transform="translate(150, 150)">
     <!-- Base circular da engrenagem -->
-    <circle cx="0" cy="0" r="75" fill="#45475a" stroke="#585b70" stroke-width="2"/>
-    
+    <circle cx="0" cy="0" r="75" fill="#1b1b1b" stroke="#2a2a2a" stroke-width="2"/>
+
     <!-- Dentes da engrenagem - 16 dentes trapezoidais mais realistas -->
-    <g fill="#313244" stroke="#585b70" stroke-width="1.5">
+    <g fill="#1b1b1b" stroke="#2a2a2a" stroke-width="1.5">
       <!-- Dente 1 -->
       <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(0)"/>
       <!-- Dente 2 -->
@@ -39,18 +39,18 @@
       <!-- Dente 16 -->
       <path d="M -10,0 L -10,-75 L -25,-90 L -40,-75 L -40,0 Z" transform="rotate(337.5)"/>
     </g>
-    
+
     <!-- Anel interno para dar profundidade -->
-    <circle cx="0" cy="0" r="60" fill="#585b70" stroke="#585b70" stroke-width="1.5"/>
+    <circle cx="0" cy="0" r="60" fill="#2a2a2a" stroke="#2a2a2a" stroke-width="1.5"/>
   </g>
-  
-  <!-- Letra U (verde - Catppuccin Mocha Green) -->
-  <path d="M125,120 L125,170 Q125,185 140,185 L160,185 Q175,185 175,170 L175,120" fill="none" stroke="#a6e3a1" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Letra C (vermelha - Catppuccin Mocha Red) -->
-  <path d="M160,130 Q160,115 150,115 Q140,115 140,130 L140,160 Q140,175 150,175 Q160,175 160,160" fill="none" stroke="#f38ba8" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
-  
+
+  <!-- Letra U (azul neutro) -->
+  <path d="M125,120 L125,170 Q125,185 140,185 L160,185 Q175,185 175,170 L175,120" fill="none" stroke="#4285F4" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Letra C (vermelho neutro) -->
+  <path d="M160,130 Q160,115 150,115 Q140,115 140,130 L140,160 Q140,175 150,175 Q160,175 160,160" fill="none" stroke="#DB4437" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+
   <!-- Buraco central com aparência metálica -->
-  <circle cx="150" cy="150" r="15" fill="#f5e0dc" stroke="#585b70" stroke-width="2"/>
-  <circle cx="150" cy="150" r="7" fill="#a6adc8"/>
+  <circle cx="150" cy="150" r="15" fill="#e0e0e0" stroke="#2a2a2a" stroke-width="2"/>
+  <circle cx="150" cy="150" r="7" fill="#a0a0a0"/>
 </svg>
