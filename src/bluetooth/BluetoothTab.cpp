@@ -48,6 +48,7 @@ namespace Bluetooth
         bluetooth_status_label_.set_text("Enabled");
         bluetooth_switch_.set_active(manager_->is_bluetooth_enabled());
         bluetooth_switch_.set_tooltip_text("Enable/Disable Bluetooth");
+        bluetooth_switch_.set_can_focus(false); // Prevent tab navigation to this switch
 
         toggle_box->pack_start(*toggle_label, Gtk::PACK_SHRINK);
         toggle_box->pack_start(bluetooth_switch_, Gtk::PACK_SHRINK);
@@ -57,6 +58,7 @@ namespace Bluetooth
         scan_button_.set_label("Scan");
         scan_button_.set_always_show_image(true);
         scan_button_.set_sensitive(manager_->is_bluetooth_enabled());
+        scan_button_.set_can_focus(false); // Prevent tab navigation to this button
 
         controls_box->pack_start(*toggle_box, Gtk::PACK_SHRINK);
         controls_box->pack_start(scan_button_, Gtk::PACK_SHRINK);

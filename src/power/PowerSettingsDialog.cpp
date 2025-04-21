@@ -50,6 +50,7 @@ namespace Power
         content->pack_start(*header_box, Gtk::PACK_SHRINK);
         // Create the notebook for tabbed settings
         notebook_ = Gtk::manage(new Gtk::Notebook());
+        notebook_->set_can_focus(false); // Prevent tab navigation to the notebook
 
         // --- Commands Tab ---
         auto commands_box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_VERTICAL, 10);
@@ -160,6 +161,7 @@ namespace Power
         show_keybind_hints_check_ = Gtk::make_managed<Gtk::CheckButton>("Show keybind hints on buttons");
         show_keybind_hints_check_->set_active(settings_->get_show_keybind_hints());
         show_keybind_hints_check_->set_margin_bottom(10);
+        show_keybind_hints_check_->set_can_focus(false); // Prevent tab navigation to this checkbox
         keybinds_box->pack_start(*show_keybind_hints_check_, Gtk::PACK_SHRINK);
 
         int keybind_row = 0;
@@ -229,14 +231,17 @@ namespace Power
         reset_button_ = Gtk::manage(new Gtk::Button("_Reset to Defaults"));
         reset_button_->set_use_underline(true);
         reset_button_->signal_clicked().connect(sigc::mem_fun(*this, &PowerSettingsDialog::reset_to_defaults));
+        reset_button_->set_can_focus(false); // Prevent tab navigation to this button
         button_box->pack_start(*reset_button_, Gtk::PACK_SHRINK);
 
         // Add the button box below the notebook
         content->pack_start(*button_box, Gtk::PACK_SHRINK);
 
         // Add standard dialog buttons (Cancel and Save)
-        add_button("_Cancel", Gtk::RESPONSE_CANCEL);
-        add_button("_Save", Gtk::RESPONSE_OK);
+        Gtk::Button *cancel_button = add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+        Gtk::Button *save_button = add_button("_Save", Gtk::RESPONSE_OK);
+        cancel_button->set_can_focus(false); // Prevent tab navigation to this button
+        save_button->set_can_focus(false);   // Prevent tab navigation to this button
         set_default_response(Gtk::RESPONSE_OK);
 
         // Load current settings into the entry fields
@@ -259,16 +264,26 @@ namespace Power
     void PowerSettingsDialog::load_settings()
     {
         command_entries_["shutdown"].entry.set_text(settings_->get_command("shutdown"));
+        command_entries_["shutdown"].entry.set_can_focus(false); // Prevent tab navigation
         command_entries_["reboot"].entry.set_text(settings_->get_command("reboot"));
+        command_entries_["reboot"].entry.set_can_focus(false); // Prevent tab navigation
         command_entries_["suspend"].entry.set_text(settings_->get_command("suspend"));
+        command_entries_["suspend"].entry.set_can_focus(false); // Prevent tab navigation
         command_entries_["hibernate"].entry.set_text(settings_->get_command("hibernate"));
+        command_entries_["hibernate"].entry.set_can_focus(false); // Prevent tab navigation
         command_entries_["lock"].entry.set_text(settings_->get_command("lock"));
+        command_entries_["lock"].entry.set_can_focus(false); // Prevent tab navigation
 
         keybind_entries_["shutdown"].entry.set_text(settings_->get_keybind("shutdown"));
+        keybind_entries_["shutdown"].entry.set_can_focus(false); // Prevent tab navigation
         keybind_entries_["reboot"].entry.set_text(settings_->get_keybind("reboot"));
+        keybind_entries_["reboot"].entry.set_can_focus(false); // Prevent tab navigation
         keybind_entries_["suspend"].entry.set_text(settings_->get_keybind("suspend"));
+        keybind_entries_["suspend"].entry.set_can_focus(false); // Prevent tab navigation
         keybind_entries_["hibernate"].entry.set_text(settings_->get_keybind("hibernate"));
+        keybind_entries_["hibernate"].entry.set_can_focus(false); // Prevent tab navigation
         keybind_entries_["lock"].entry.set_text(settings_->get_keybind("lock"));
+        keybind_entries_["lock"].entry.set_can_focus(false); // Prevent tab navigation
 
         if (show_keybind_hints_check_)
             show_keybind_hints_check_->set_active(settings_->get_show_keybind_hints());

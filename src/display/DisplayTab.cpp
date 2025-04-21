@@ -67,6 +67,7 @@ namespace Display
         brightness_scale_.set_increments(1, 10);
         brightness_scale_.set_size_request(300, -1);
         brightness_scale_.set_draw_value(false);
+        brightness_scale_.set_can_focus(false); // Prevent tab navigation to this slider
         brightness_scale_.add_mark(0, Gtk::POS_BOTTOM, "0%");
         brightness_scale_.add_mark(25, Gtk::POS_BOTTOM, "25%");
         brightness_scale_.add_mark(50, Gtk::POS_BOTTOM, "50%");
@@ -104,6 +105,7 @@ namespace Display
         bluelight_scale_.set_increments(100, 500);
         bluelight_scale_.set_size_request(300, -1);
         bluelight_scale_.set_draw_value(false);
+        bluelight_scale_.set_can_focus(false); // Prevent tab navigation to this slider
         bluelight_scale_.add_mark(1000, Gtk::POS_BOTTOM, "1000K (Warm)");
         bluelight_scale_.add_mark(2300, Gtk::POS_BOTTOM, "2300K");
         bluelight_scale_.add_mark(3750, Gtk::POS_BOTTOM, "3750K");

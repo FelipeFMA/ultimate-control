@@ -34,7 +34,67 @@ namespace Power
         Gtk::Window* parent = dynamic_cast<Gtk::Window*>(get_toplevel());
         if (parent) {
             parent->add_accel_group(accel_group_);
+
+            // Add a key press event handler to the parent window
+            parent->add_events(Gdk::KEY_PRESS_MASK);
+            parent->signal_key_press_event().connect(
+                [this](GdkEventKey* event) -> bool {
+                    // Only handle keybinds when the Power tab is active
+                    Gtk::Notebook* notebook = dynamic_cast<Gtk::Notebook*>(get_parent());
+                    if (!notebook || notebook->get_nth_page(notebook->get_current_page()) != this) {
+                        return false; // Not on the Power tab, let other handlers process the event
+                    }
+
+                    // Handle single-key shortcuts (without modifiers)
+                    if (event->state == 0) { // No modifiers
+                        auto settings = manager_->get_settings();
+
+                        // Check each action's keybind
+                        if (gdk_keyval_to_unicode(event->keyval) == 's' ||
+                            gdk_keyval_to_unicode(event->keyval) == 'S') {
+                            if (settings->get_keybind("shutdown") == "S") {
+                                manager_->shutdown();
+                                return true;
+                            }
+                        }
+                        else if (gdk_keyval_to_unicode(event->keyval) == 'r' ||
+                                 gdk_keyval_to_unicode(event->keyval) == 'R') {
+                            if (settings->get_keybind("reboot") == "R") {
+                                manager_->reboot();
+                                return true;
+                            }
+                        }
+                        else if (gdk_keyval_to_unicode(event->keyval) == 'u' ||
+                                 gdk_keyval_to_unicode(event->keyval) == 'U') {
+                            if (settings->get_keybind("suspend") == "U") {
+                                manager_->suspend();
+                                return true;
+                            }
+                        }
+                        else if (gdk_keyval_to_unicode(event->keyval) == 'h' ||
+                                 gdk_keyval_to_unicode(event->keyval) == 'H') {
+                            if (settings->get_keybind("hibernate") == "H") {
+                                manager_->hibernate();
+                                return true;
+                            }
+                        }
+                        else if (gdk_keyval_to_unicode(event->keyval) == 'l' ||
+                                 gdk_keyval_to_unicode(event->keyval) == 'L') {
+                            if (settings->get_keybind("lock") == "L") {
+                                std::system(manager_->get_settings()->get_command("lock").c_str());
+                                return true;
+                            }
+                        }
+                    }
+                    return false; // Let other keys pass through
+                }, false);
         } });
+
+        // We'll set up the keybinds after the widget is realized
+        signal_realize().connect([this]()
+                                 {
+            // Set up keybinds after the widget is realized
+            setup_action_keybinds(); });
 
         // Add a scrolled window to contain all sections
         scrolled_window_.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
@@ -120,6 +180,9 @@ namespace Power
         shutdown_button_.set_tooltip_text("Power off the system");
         shutdown_button_.signal_clicked().connect([this]()
                                                   { manager_->shutdown(); });
+        // Prevent tab navigation
+        shutdown_button_.property_can_default() = false;
+        shutdown_button_.property_can_focus() = false;
         // Accelerator will be set up dynamically
 
         // Configure the reboot button with icon and click handler
@@ -139,6 +202,9 @@ namespace Power
         reboot_button_.set_tooltip_text("Restart the system");
         reboot_button_.signal_clicked().connect([this]()
                                                 { manager_->reboot(); });
+        // Prevent tab navigation
+        reboot_button_.property_can_default() = false;
+        reboot_button_.property_can_focus() = false;
         // Accelerator will be set up dynamically
 
         // Add both buttons to the buttons container
@@ -204,6 +270,9 @@ namespace Power
         suspend_button_.set_tooltip_text("Put the system to sleep");
         suspend_button_.signal_clicked().connect([this]()
                                                  { manager_->suspend(); });
+        // Prevent tab navigation
+        suspend_button_.property_can_default() = false;
+        suspend_button_.property_can_focus() = false;
         // Accelerator will be set up dynamically
 
         // Configure the hibernate button with icon and click handler
@@ -223,6 +292,9 @@ namespace Power
         hibernate_button_.set_tooltip_text("Hibernate the system");
         hibernate_button_.signal_clicked().connect([this]()
                                                    { manager_->hibernate(); });
+        // Prevent tab navigation
+        hibernate_button_.property_can_default() = false;
+        hibernate_button_.property_can_focus() = false;
         // Accelerator will be set up dynamically
 
         // Configure the lock screen button with icon and click handler
@@ -242,6 +314,9 @@ namespace Power
         lock_button_.set_tooltip_text("Lock the screen");
         lock_button_.signal_clicked().connect([this]()
                                               { std::system(manager_->get_settings()->get_command("lock").c_str()); });
+        // Prevent tab navigation
+        lock_button_.property_can_default() = false;
+        lock_button_.property_can_focus() = false;
         // Accelerator will be set up dynamically
 
         // Add all three buttons to the buttons container
@@ -297,6 +372,7 @@ namespace Power
 
         // Configure the dropdown for selecting power profiles
         profile_combo_.set_hexpand(true);
+        profile_combo_.set_can_focus(false); // Prevent tab navigation to this dropdown
 
         // Populate the dropdown with available power profiles
         auto profiles = manager_->list_power_profiles();
@@ -369,6 +445,9 @@ namespace Power
         auto settings_icon = Gtk::make_managed<Gtk::Image>();
         settings_icon->set_from_icon_name("emblem-system-symbolic", Gtk::ICON_SIZE_BUTTON);
         settings_button->set_image(*settings_icon);
+        // Prevent tab navigation
+        settings_button->property_can_default() = false;
+        settings_button->property_can_focus() = false;
 
         // Connect the button click to open settings dialog
         settings_button->signal_clicked().connect(sigc::mem_fun(*this, &PowerTab::on_settings_clicked));

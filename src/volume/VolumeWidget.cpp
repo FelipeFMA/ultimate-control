@@ -73,6 +73,7 @@ namespace Volume
         volume_scale_.set_size_request(200, -1);
         volume_scale_.set_draw_value(true);
         volume_scale_.set_has_origin(true);
+        volume_scale_.set_can_focus(false); // Prevent tab navigation to this slider
 
         // Add preset marks at 0%, 25%, 50%, 75%, and 100%
         volume_scale_.add_mark(0, Gtk::POS_BOTTOM, "0%");
@@ -84,6 +85,7 @@ namespace Volume
         // Set up the mute toggle button with initial state
         mute_button_.set_active(sink.muted);
         mute_button_.set_relief(Gtk::RELIEF_NONE);
+        mute_button_.set_can_focus(false); // Prevent tab navigation to this button
 
         // Initialize the volume icon based on current volume and mute state
         update_volume_icon(sink.volume, sink.muted);
@@ -96,6 +98,7 @@ namespace Volume
 
         // Set up the default device checkbox
         default_check_.set_active(sink.is_default);
+        default_check_.set_can_focus(false); // Prevent tab navigation to this checkbox
         default_box_.pack_start(default_check_, Gtk::PACK_SHRINK);
         inner_box->pack_start(default_box_, Gtk::PACK_SHRINK);
 

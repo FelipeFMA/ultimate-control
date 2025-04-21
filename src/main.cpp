@@ -86,6 +86,7 @@ better_control.py     * @param floating_mode Whether to make the window float on
 
         notebook_.set_scrollable(true);
         notebook_.set_show_tabs(!minimal_mode_);
+        notebook_.set_can_focus(false); // Prevent tab navigation to the notebook
         vbox_.pack_start(notebook_, Gtk::PACK_EXPAND_WIDGET);
 
         // Load tab configuration from settings
@@ -231,6 +232,7 @@ better_control.py     * @param floating_mode Whether to make the window float on
         auto settings_button = Gtk::make_managed<Gtk::Button>();
         settings_button->set_tooltip_text("Settings");
         settings_button->set_relief(Gtk::RELIEF_NONE);
+        settings_button->set_can_focus(false); // Prevent tab navigation to this button
 
         auto rotating_icon = Gtk::make_managed<RotatingSettingsIcon>();
         settings_button->add(*rotating_icon);
@@ -334,6 +336,7 @@ private:
     {
         // Create an event box to capture clicks
         auto event_box = Gtk::make_managed<Gtk::EventBox>();
+        event_box->set_can_focus(false); // Prevent tab navigation to tab labels
 
         // Create horizontal box to hold icon and label
         auto box = Gtk::make_managed<Gtk::Box>(Gtk::ORIENTATION_HORIZONTAL, 4);

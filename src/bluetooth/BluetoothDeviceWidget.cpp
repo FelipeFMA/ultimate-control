@@ -93,6 +93,7 @@ namespace Bluetooth
             connect_button_.set_label("Connect");
         }
         connect_button_.set_always_show_image(true);
+        connect_button_.set_can_focus(false); // Prevent tab navigation to this button
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &BluetoothDeviceWidget::on_connect_clicked));
 
         // Forget button (only for paired devices)
@@ -101,6 +102,7 @@ namespace Bluetooth
         forget_button_.set_tooltip_text("Forget this device");
         forget_button_.set_always_show_image(true);
         forget_button_.set_sensitive(device_.paired);
+        forget_button_.set_can_focus(false); // Prevent tab navigation to this button
         forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &BluetoothDeviceWidget::on_forget_clicked));
 
         // Add buttons to controls box

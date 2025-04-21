@@ -91,18 +91,21 @@ namespace Wifi
             connect_button_.set_label("Connect");
         }
         connect_button_.set_always_show_image(true);
+        connect_button_.set_can_focus(false); // Prevent tab navigation to this button
 
         // Set up the forget button with trash icon
         forget_button_.set_image_from_icon_name("user-trash-symbolic", Gtk::ICON_SIZE_BUTTON);
         forget_button_.set_label("Forget");
         forget_button_.set_tooltip_text("Forget this network");
         forget_button_.set_always_show_image(true);
+        forget_button_.set_can_focus(false); // Prevent tab navigation to this button
 
         // Set up the share button with share icon for QR code generation
         share_button_.set_image_from_icon_name("emblem-shared-symbolic", Gtk::ICON_SIZE_BUTTON);
         share_button_.set_label("Share");
         share_button_.set_tooltip_text("Share network via QR code");
         share_button_.set_always_show_image(true);
+        share_button_.set_can_focus(false); // Prevent tab navigation to this button
 
         // Add buttons to the controls box (connect on right, others on left)
         controls_box_.pack_end(connect_button_, Gtk::PACK_SHRINK);

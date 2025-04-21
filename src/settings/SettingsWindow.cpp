@@ -72,6 +72,7 @@ namespace Settings
         Gtk::Button *about_button = new Gtk::Button("About");
         about_button->set_tooltip_text("Show information about Ultimate Control");
         about_button->signal_clicked().connect(sigc::mem_fun(*this, &SettingsWindow::show_about_dialog));
+        about_button->set_can_focus(false); // Prevent tab navigation to this button
 
         // Create a box for the About button to match other buttons' sizing
         Gtk::Box *left_buttons = new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 0);
@@ -96,12 +97,14 @@ namespace Settings
         cancel_button->signal_clicked().connect([this]()
                                                 { response(Gtk::RESPONSE_CANCEL); });
         cancel_button->set_size_request(85, -1); // Make same width as About button
+        cancel_button->set_can_focus(false);     // Prevent tab navigation to this button
 
         Gtk::Button *save_button = new Gtk::Button("_Save");
         save_button->set_use_underline(true);
         save_button->signal_clicked().connect([this]()
                                               { response(Gtk::RESPONSE_APPLY); });
         save_button->set_size_request(85, -1); // Make same width as About button
+        save_button->set_can_focus(false);     // Prevent tab navigation to this button
 
         // Add buttons to the right box
         right_buttons->pack_end(*save_button, false, false, 0);
@@ -201,6 +204,7 @@ namespace Settings
         floating_check_.set_margin_start(8);
         floating_check_.set_margin_top(3);
         floating_check_.set_margin_bottom(3);
+        floating_check_.set_can_focus(false); // Prevent tab navigation to this checkbox
 
         // Check if floating mode is enabled in settings
         bool floating_enabled = false;
@@ -336,6 +340,7 @@ namespace Settings
             row->enabled_check.signal_toggled().connect(
                 [this, id = tab.id]()
                 { on_tab_enabled_toggled(id); });
+            row->enabled_check.set_can_focus(false); // Prevent tab navigation to this checkbox
 
             // Create the label showing the tab name
             row->name_label.set_text(tab.name);
@@ -349,10 +354,12 @@ namespace Settings
             row->up_button.set_image_from_icon_name("go-up-symbolic", Gtk::ICON_SIZE_BUTTON);
             row->up_button.set_tooltip_text("Move up");
             row->up_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsWindow::on_move_up_clicked));
+            row->up_button.set_can_focus(false); // Prevent tab navigation to this button
 
             row->down_button.set_image_from_icon_name("go-down-symbolic", Gtk::ICON_SIZE_BUTTON);
             row->down_button.set_tooltip_text("Move down");
             row->down_button.signal_clicked().connect(sigc::mem_fun(*this, &SettingsWindow::on_move_down_clicked));
+            row->down_button.set_can_focus(false); // Prevent tab navigation to this button
 
             // Assemble all components into the row
             row->row_box.pack_start(row->enabled_check, Gtk::PACK_SHRINK);
