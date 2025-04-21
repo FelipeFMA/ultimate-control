@@ -74,6 +74,13 @@ namespace Volume
         volume_scale_.set_draw_value(true);
         volume_scale_.set_has_origin(true);
 
+        // Add preset marks at 0%, 25%, 50%, 75%, and 100%
+        volume_scale_.add_mark(0, Gtk::POS_BOTTOM, "0%");
+        volume_scale_.add_mark(25, Gtk::POS_BOTTOM, "25%");
+        volume_scale_.add_mark(50, Gtk::POS_BOTTOM, "50%");
+        volume_scale_.add_mark(75, Gtk::POS_BOTTOM, "75%");
+        volume_scale_.add_mark(100, Gtk::POS_BOTTOM, "100%");
+
         // Set up the mute toggle button with initial state
         mute_button_.set_active(sink.muted);
         mute_button_.set_relief(Gtk::RELIEF_NONE);
