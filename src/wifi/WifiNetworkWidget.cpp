@@ -309,11 +309,44 @@ namespace Wifi
                                             password_label->set_halign(Gtk::ALIGN_START);
                                             entry_box->pack_start(*password_label, Gtk::PACK_SHRINK);
 
+                                            // Create a horizontal box for password entry and eye button
+                                            Gtk::Box *pwd_entry_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
+
+                                            // Create password entry field
                                             Gtk::Entry *entry = Gtk::manage(new Gtk::Entry());
                                             entry->set_visibility(false);
                                             entry->set_invisible_char('*');
                                             entry->set_activates_default(true);
-                                            entry_box->pack_start(*entry, Gtk::PACK_SHRINK);
+
+                                            // Create eye button to toggle password visibility
+                                            Gtk::Button *eye_button = Gtk::manage(new Gtk::Button());
+                                            Gtk::Image *eye_icon = Gtk::manage(new Gtk::Image());
+                                            eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                                            eye_button->set_image(*eye_icon);
+                                            eye_button->set_relief(Gtk::RELIEF_NONE);
+                                            eye_button->set_tooltip_text("Show password");
+
+                                            // Connect signal to toggle password visibility
+                                            eye_button->signal_clicked().connect([entry, eye_icon, eye_button]()
+                                                                                 {
+                                                bool current_visibility = entry->get_visibility();
+                                                entry->set_visibility(!current_visibility);
+
+                                                if (current_visibility) {
+                                                    // Change to hidden password
+                                                    eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                                                    eye_button->set_tooltip_text("Show password");
+                                                } else {
+                                                    // Change to visible password
+                                                    eye_icon->set_from_icon_name("view-conceal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                                                    eye_button->set_tooltip_text("Hide password");
+                                                } });
+
+                                            // Add password entry and eye button to the horizontal box
+                                            pwd_entry_box->pack_start(*entry, Gtk::PACK_EXPAND_WIDGET);
+                                            pwd_entry_box->pack_end(*eye_button, Gtk::PACK_SHRINK);
+
+                                            entry_box->pack_start(*pwd_entry_box, Gtk::PACK_SHRINK);
 
                                             content_box->pack_start(*entry_box, Gtk::PACK_EXPAND_WIDGET);
 
@@ -471,10 +504,43 @@ namespace Wifi
             Gtk::Label *pwd_label = Gtk::manage(new Gtk::Label("Enter the password to include in the QR code:"));
             pwd_box->pack_start(*pwd_label, Gtk::PACK_SHRINK);
 
+            // Create a horizontal box for password entry and eye button
+            Gtk::Box *pwd_entry_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
+
+            // Create password entry field
             Gtk::Entry *pwd_entry = Gtk::manage(new Gtk::Entry());
             pwd_entry->set_visibility(false);
             pwd_entry->set_invisible_char('*');
-            pwd_box->pack_start(*pwd_entry, Gtk::PACK_SHRINK);
+
+            // Create eye button to toggle password visibility
+            Gtk::Button *eye_button = Gtk::manage(new Gtk::Button());
+            Gtk::Image *eye_icon = Gtk::manage(new Gtk::Image());
+            eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+            eye_button->set_image(*eye_icon);
+            eye_button->set_relief(Gtk::RELIEF_NONE);
+            eye_button->set_tooltip_text("Show password");
+
+            // Connect signal to toggle password visibility
+            eye_button->signal_clicked().connect([pwd_entry, eye_icon, eye_button]()
+                                                 {
+                bool current_visibility = pwd_entry->get_visibility();
+                pwd_entry->set_visibility(!current_visibility);
+
+                if (current_visibility) {
+                    // Change to hidden password
+                    eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                    eye_button->set_tooltip_text("Show password");
+                } else {
+                    // Change to visible password
+                    eye_icon->set_from_icon_name("view-conceal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                    eye_button->set_tooltip_text("Hide password");
+                } });
+
+            // Add password entry and eye button to the horizontal box
+            pwd_entry_box->pack_start(*pwd_entry, Gtk::PACK_EXPAND_WIDGET);
+            pwd_entry_box->pack_end(*eye_button, Gtk::PACK_SHRINK);
+
+            pwd_box->pack_start(*pwd_entry_box, Gtk::PACK_SHRINK);
 
             pwd_dialog.get_content_area()->pack_start(*pwd_box, Gtk::PACK_SHRINK);
             pwd_dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
@@ -552,12 +618,48 @@ namespace Wifi
         passwd_label->set_halign(Gtk::Align::ALIGN_START);
         passwd_label->get_style_context()->add_class("dimmed-label");
 
+        // Create a horizontal box for password and eye button
+        Gtk::Box *passwd_field_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
+
+        // Create password label with hidden text (dots)
         Gtk::Label *passwd = Gtk::manage(new Gtk::Label());
-        passwd->set_markup("<b>" + password + "</b>");
+        std::string hidden_password(password.length(), '*');
+        passwd->set_markup("<b>" + hidden_password + "</b>");
         passwd->set_halign(Gtk::Align::ALIGN_START);
 
+        // Create eye button to toggle password visibility
+        Gtk::Button *eye_button = Gtk::manage(new Gtk::Button());
+        Gtk::Image *eye_icon = Gtk::manage(new Gtk::Image());
+        eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+        eye_button->set_image(*eye_icon);
+        eye_button->set_relief(Gtk::RELIEF_NONE);
+        eye_button->set_tooltip_text("Show password");
+
+        // Add password and eye button to the horizontal box
+        passwd_field_box->pack_start(*passwd, Gtk::PACK_EXPAND_WIDGET);
+        passwd_field_box->pack_end(*eye_button, Gtk::PACK_SHRINK);
+
+        // Connect signal to toggle password visibility
+        bool password_visible = false;
+        eye_button->signal_clicked().connect([passwd, eye_icon, eye_button, password, &password_visible]()
+                                             {
+            if (password_visible) {
+                // Hide password
+                std::string hidden_password(password.length(), '*');
+                passwd->set_markup("<b>" + hidden_password + "</b>");
+                eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                eye_button->set_tooltip_text("Show password");
+                password_visible = false;
+            } else {
+                // Show password
+                passwd->set_markup("<b>" + password + "</b>");
+                eye_icon->set_from_icon_name("view-conceal-symbolic", Gtk::ICON_SIZE_BUTTON);
+                eye_button->set_tooltip_text("Hide password");
+                password_visible = true;
+            } });
+
         passwd_box->pack_start(*passwd_label, Gtk::PACK_SHRINK);
-        passwd_box->pack_start(*passwd, Gtk::PACK_SHRINK);
+        passwd_box->pack_start(*passwd_field_box, Gtk::PACK_SHRINK);
 
         network_box->pack_start(*ssid_box, Gtk::PACK_SHRINK);
         network_box->pack_start(*passwd_box, Gtk::PACK_SHRINK);
