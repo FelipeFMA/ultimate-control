@@ -54,7 +54,7 @@ namespace Settings
         content_box_.set_margin_start(10);
         content_box_.set_margin_end(10);
         content_box_.set_margin_top(10);
-        content_box_.set_margin_bottom(10);
+        content_box_.set_margin_bottom(20); // Increased bottom margin to add space above buttons
         scrolled_window_.add(content_box_);
 
         // Create the general settings section
@@ -66,6 +66,7 @@ namespace Settings
         // Get the action area to customize the button layout
         Gtk::ButtonBox *action_area = get_action_area();
         action_area->set_layout(Gtk::BUTTONBOX_EDGE); // Use EDGE layout for proper spacing
+        action_area->set_margin_top(10);              // Add margin above the buttons
 
         // Create and add the about button directly to the action area
         Gtk::Button *about_button = new Gtk::Button("About");
