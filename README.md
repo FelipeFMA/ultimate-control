@@ -50,15 +50,15 @@ Ultimate Control is a GTK-based application that provides a unified interface fo
 - Customizable power commands
 
 ## 📸 Screenshots
-![volume](https://github.com/user-attachments/assets/91325698-52ad-47e9-888e-91028e57cb36)
+![volume](https://github.com/user-attachments/assets/2aaf0b16-bd8b-4d12-ba3e-251bd6802b14)
 
-![display](https://github.com/user-attachments/assets/317336fa-b59d-4ed5-ae9e-036718fae1c3)
+![display](https://github.com/user-attachments/assets/08ff15d3-3391-40c3-a0b4-6b46522214fd)
 
-![wifi](https://github.com/user-attachments/assets/ecc9f41a-7364-4543-8dcd-325266e50bc2)
+![wifi](https://github.com/user-attachments/assets/04ea2158-4732-4bd4-afbb-8c6737c66955)
 
-![bluetooth](https://github.com/user-attachments/assets/55494454-c388-4245-987e-8d6c59c60c4a)
+![bluetooth](https://github.com/user-attachments/assets/bc58c2e4-6948-444e-873c-7a7253e33241)
 
-![power](https://github.com/user-attachments/assets/37b685a6-0f84-4c27-b521-7f70518b5612)
+![power](https://github.com/user-attachments/assets/fc50aea9-2043-4560-9672-db316d29f1e7)
 
 ## 📥 Installation
 
