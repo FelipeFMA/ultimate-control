@@ -657,6 +657,9 @@ namespace Bluetooth
             enabled_ = true;
             if (state_callback_)
                 state_callback_(enabled_);
+
+            // Perform a scan to refresh the device list
+            scan_devices_async();
         }
     }
     void BluetoothManager::disable_bluetooth()
@@ -666,6 +669,19 @@ namespace Bluetooth
             enabled_ = false;
             if (state_callback_)
                 state_callback_(enabled_);
+
+            // Clear device list since Bluetooth is now disabled
+            {
+                std::lock_guard<std::mutex> lock(impl_->mutex);
+                impl_->last_devices.clear();
+            }
+
+            // Update the UI to show the "Bluetooth is turned off" message
+            if (update_callback_)
+            {
+                DeviceList empty_devices;
+                update_callback_(empty_devices);
+            }
         }
     }
     bool BluetoothManager::is_bluetooth_enabled() const { return enabled_; }

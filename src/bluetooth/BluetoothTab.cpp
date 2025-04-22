@@ -123,10 +123,6 @@ namespace Bluetooth
         else
         {
             bluetooth_status_icon_.set_from_icon_name("bluetooth-disabled-symbolic", Gtk::ICON_SIZE_DIALOG);
-
-            // When Bluetooth is disabled, update the device list to hide all devices
-            // and show the "Bluetooth is turned off" message
-            update_device_list(manager_->get_devices());
         }
     }
 
@@ -150,20 +146,29 @@ namespace Bluetooth
 
     void BluetoothTab::update_device_list(const std::vector<Device> &devices)
     {
+        // Remove all existing widgets from the container
         for (auto &widget : widgets_)
         {
             container_.remove(*widget);
         }
         widgets_.clear();
 
+        // Remove loading label if it exists
         if (loading_label_ != nullptr)
         {
             container_.remove(*loading_label_);
             loading_label_ = nullptr;
         }
 
-        // If Bluetooth is disabled, show a message and don't display any devices
-        if (!manager_->is_bluetooth_enabled())
+        // Remove any other children (like status messages) that might be in the container
+        std::vector<Gtk::Widget *> children = container_.get_children();
+        for (auto child : children)
+        {
+            container_.remove(*child);
+        }
+
+        // If devices list is empty and Bluetooth is disabled, show "Bluetooth is turned off" message
+        if (devices.empty() && !manager_->is_bluetooth_enabled())
         {
             Gtk::Label *bluetooth_off = Gtk::manage(new Gtk::Label("Bluetooth is turned off"));
             bluetooth_off->set_margin_top(20);
