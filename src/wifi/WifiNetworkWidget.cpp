@@ -489,76 +489,8 @@ namespace Wifi
         // Initialize the QR code generator with medium error correction
         Utils::QRCode qrcode(Utils::QRCode::Version::V3, Utils::QRCode::ErrorCorrection::M);
 
-        // Get password for secured networks if not already connected
+        // Get password for the network - we already know it's available since the share button is only shown for saved networks
         std::string password = manager_->get_password(target_ssid);
-        if (network_.secured && !network_.connected)
-        {
-            // Create a password entry dialog
-            Gtk::Dialog pwd_dialog("Enter WiFi Password", *dynamic_cast<Gtk::Window *>(get_toplevel()), true);
-            pwd_dialog.set_default_size(300, -1);
-            pwd_dialog.set_border_width(10);
-
-            Gtk::Box *pwd_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 10));
-            pwd_box->set_border_width(10);
-
-            Gtk::Label *pwd_label = Gtk::manage(new Gtk::Label("Enter the password to include in the QR code:"));
-            pwd_box->pack_start(*pwd_label, Gtk::PACK_SHRINK);
-
-            // Create a horizontal box for password entry and eye button
-            Gtk::Box *pwd_entry_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 5));
-
-            // Create password entry field
-            Gtk::Entry *pwd_entry = Gtk::manage(new Gtk::Entry());
-            pwd_entry->set_visibility(false);
-            pwd_entry->set_invisible_char('*');
-
-            // Create eye button to toggle password visibility
-            Gtk::Button *eye_button = Gtk::manage(new Gtk::Button());
-            Gtk::Image *eye_icon = Gtk::manage(new Gtk::Image());
-            eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
-            eye_button->set_image(*eye_icon);
-            eye_button->set_relief(Gtk::RELIEF_NONE);
-            eye_button->set_tooltip_text("Show password");
-
-            // Connect signal to toggle password visibility
-            eye_button->signal_clicked().connect([pwd_entry, eye_icon, eye_button]()
-                                                 {
-                bool current_visibility = pwd_entry->get_visibility();
-                pwd_entry->set_visibility(!current_visibility);
-
-                if (current_visibility) {
-                    // Change to hidden password
-                    eye_icon->set_from_icon_name("view-reveal-symbolic", Gtk::ICON_SIZE_BUTTON);
-                    eye_button->set_tooltip_text("Show password");
-                } else {
-                    // Change to visible password
-                    eye_icon->set_from_icon_name("view-conceal-symbolic", Gtk::ICON_SIZE_BUTTON);
-                    eye_button->set_tooltip_text("Hide password");
-                } });
-
-            // Add password entry and eye button to the horizontal box
-            pwd_entry_box->pack_start(*pwd_entry, Gtk::PACK_EXPAND_WIDGET);
-            pwd_entry_box->pack_end(*eye_button, Gtk::PACK_SHRINK);
-
-            pwd_box->pack_start(*pwd_entry_box, Gtk::PACK_SHRINK);
-
-            pwd_dialog.get_content_area()->pack_start(*pwd_box, Gtk::PACK_SHRINK);
-            pwd_dialog.add_button("Cancel", Gtk::RESPONSE_CANCEL);
-            pwd_dialog.add_button("OK", Gtk::RESPONSE_OK);
-            pwd_dialog.set_default_response(Gtk::RESPONSE_OK);
-
-            pwd_dialog.show_all_children();
-
-            int result = pwd_dialog.run();
-            if (result == Gtk::RESPONSE_OK)
-            {
-                password = pwd_entry->get_text();
-            }
-            else
-            {
-                return; // User cancelled
-            }
-        }
 
         // Format the WiFi network information for the QR code
         std::string auth_type = network_.secured ? "WPA" : "nopass";
