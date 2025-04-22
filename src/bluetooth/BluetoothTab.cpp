@@ -123,6 +123,10 @@ namespace Bluetooth
         else
         {
             bluetooth_status_icon_.set_from_icon_name("bluetooth-disabled-symbolic", Gtk::ICON_SIZE_DIALOG);
+
+            // When Bluetooth is disabled, update the device list to hide all devices
+            // and show the "Bluetooth is turned off" message
+            update_device_list(manager_->get_devices());
         }
     }
 
@@ -158,7 +162,16 @@ namespace Bluetooth
             loading_label_ = nullptr;
         }
 
-        if (devices.empty() && manager_->is_bluetooth_enabled())
+        // If Bluetooth is disabled, show a message and don't display any devices
+        if (!manager_->is_bluetooth_enabled())
+        {
+            Gtk::Label *bluetooth_off = Gtk::manage(new Gtk::Label("Bluetooth is turned off"));
+            bluetooth_off->set_margin_top(20);
+            bluetooth_off->set_margin_bottom(20);
+            container_.pack_start(*bluetooth_off, Gtk::PACK_SHRINK);
+        }
+        // If Bluetooth is enabled but no devices found
+        else if (devices.empty())
         {
             Gtk::Label *no_devices = Gtk::manage(new Gtk::Label("No Bluetooth devices found"));
             no_devices->set_margin_top(20);
