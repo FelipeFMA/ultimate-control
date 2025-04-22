@@ -279,13 +279,20 @@ namespace Wifi
             loading_label_ = nullptr;
         }
 
+        // Remove the "no networks" label if it exists
+        if (no_networks_label_ != nullptr)
+        {
+            container_.remove(*no_networks_label_);
+            no_networks_label_ = nullptr;
+        }
+
         // If WiFi is enabled but no networks were found, show a message
         if (networks.empty() && manager_->is_wifi_enabled())
         {
-            Gtk::Label *no_networks = Gtk::manage(new Gtk::Label("No wireless networks found"));
-            no_networks->set_margin_top(20);
-            no_networks->set_margin_bottom(20);
-            container_.pack_start(*no_networks, Gtk::PACK_SHRINK);
+            no_networks_label_ = Gtk::manage(new Gtk::Label("No wireless networks found"));
+            no_networks_label_->set_margin_top(20);
+            no_networks_label_->set_margin_bottom(20);
+            container_.pack_start(*no_networks_label_, Gtk::PACK_SHRINK);
         }
         else
         { // Create widgets for each detected network

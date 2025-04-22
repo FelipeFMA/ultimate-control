@@ -97,6 +97,7 @@ namespace Wifi
         std::vector<std::unique_ptr<WifiNetworkWidget>> widgets_; ///< List of network widgets
         bool initial_scan_performed_ = false;                     ///< Flag to track if initial scan has been done
         Gtk::Label *loading_label_ = nullptr;                     ///< Loading message shown before networks are loaded
+        Gtk::Label *no_networks_label_ = nullptr;                 ///< Label shown when no networks are found
     };
 
 } // namespace Wifi
