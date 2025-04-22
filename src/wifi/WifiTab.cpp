@@ -289,13 +289,15 @@ namespace Wifi
         }
         else
         { // Create widgets for each detected network
-            // Keep the conneced wifi at the top
+            // Keep the connected wifi at the top, then sort by signal strength
             std::vector<Network> sorted_networks = networks;
             std::sort(sorted_networks.begin(), sorted_networks.end(), [](const Network &a, const Network &b)
                       {
+                // Always prioritize connected networks
                 if(a.connected != b.connected)
                     return a.connected;
-                return a.ssid < b.ssid; });
+                // For non-connected networks, sort by signal strength (higher first)
+                return a.signal_strength > b.signal_strength; });
             for (const auto &net : sorted_networks)
             {
                 auto widget = std::make_unique<WifiNetworkWidget>(net, manager_);
