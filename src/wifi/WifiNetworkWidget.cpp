@@ -61,11 +61,11 @@ namespace Wifi
 
         // Add network info widgets to the info box in a single line
         network_info_box_.pack_start(signal_icon_, Gtk::PACK_SHRINK);
-        network_info_box_.pack_start(ssid_label_, Gtk::PACK_EXPAND_WIDGET);
-        // Put lock icon, check icon, and signal strength right after the network name
+        // Put lock icon, check icon, and signal strength before the network name
         network_info_box_.pack_start(security_icon_, Gtk::PACK_SHRINK);
         network_info_box_.pack_start(status_icon_, Gtk::PACK_SHRINK);
         network_info_box_.pack_start(signal_label_, Gtk::PACK_SHRINK);
+        network_info_box_.pack_start(ssid_label_, Gtk::PACK_EXPAND_WIDGET);
 
         // Set up the connect/disconnect button with appropriate icon and label
         if (network.connected)
