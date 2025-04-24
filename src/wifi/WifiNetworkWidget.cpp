@@ -109,11 +109,11 @@ namespace Wifi
 
         // Add buttons to the controls box (connect on right, others on left)
         controls_box_.pack_end(connect_button_, Gtk::PACK_SHRINK);
-        controls_box_.pack_start(forget_button_, Gtk::PACK_SHRINK);
 
-        // Only show the share button if the network is saved (i.e., password is available)
+        // Only show the forget and share buttons if the network is saved (i.e., password is available)
         if (!manager_->get_password(network.ssid).empty())
         {
+            controls_box_.pack_start(forget_button_, Gtk::PACK_SHRINK);
             controls_box_.pack_start(share_button_, Gtk::PACK_SHRINK);
             share_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_share_clicked));
         }
@@ -125,7 +125,12 @@ namespace Wifi
 
         // Connect button click handlers
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_connect_clicked));
-        forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
+
+        // Only connect the forget button handler if the button is shown (for saved networks)
+        if (!manager_->get_password(network.ssid).empty())
+        {
+            forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
+        }
 
         // Add a subtle separator at the bottom for visual separation between networks
         Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
