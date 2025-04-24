@@ -26,11 +26,11 @@ namespace Wifi
      * provides controls for connecting, forgetting, and sharing the network.
      */
     WifiNetworkWidget::WifiNetworkWidget(const Network &network, std::shared_ptr<WifiManager> manager)
-        : Gtk::Box(Gtk::ORIENTATION_VERTICAL, 5),
+        : Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 10),
           manager_(std::move(manager)),
           network_(network),
-          network_info_box_(Gtk::ORIENTATION_HORIZONTAL, 8),
-          controls_box_(Gtk::ORIENTATION_HORIZONTAL, 8),
+          network_info_box_(Gtk::ORIENTATION_HORIZONTAL, 5),
+          controls_box_(Gtk::ORIENTATION_HORIZONTAL, 5),
           ssid_label_(network.ssid),
           signal_label_(std::to_string(network.signal_strength) + "%"),
           status_label_(network.connected ? "Connected" : (network.secured ? "Secured" : "Open")),
@@ -39,17 +39,13 @@ namespace Wifi
           share_button_()
     {
         // Set up the main container with margins for better spacing
+        set_margin_top(5);
+        set_margin_bottom(5);
         set_margin_start(10);
         set_margin_end(10);
-        set_margin_top(8);
-        set_margin_bottom(8);
 
-        // Create a vertical box for network content with padding
-        Gtk::Box *inner_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_VERTICAL, 4));
-        inner_box->set_margin_start(10);
-        inner_box->set_margin_end(10);
-        inner_box->get_style_context()->add_class("inner-box");
-        pack_start(*inner_box, Gtk::PACK_EXPAND_WIDGET);
+        // Set up the network info box (left side)
+        network_info_box_.set_hexpand(true);
 
         // Initialize the icons based on network properties
         update_signal_icon(network.signal_strength);
@@ -57,27 +53,19 @@ namespace Wifi
         update_connection_status(network.connected);
 
         // Make the SSID label bold to emphasize the network name
-        Pango::AttrList attrs;
-        auto font_desc = Pango::FontDescription("Bold");
-        auto attr = Pango::Attribute::create_attr_font_desc(font_desc);
-        attrs.insert(attr);
-        ssid_label_.set_attributes(attrs);
-
-        // Add network info widgets (signal icon, SSID, security icon, status) to the info box
-        network_info_box_.pack_start(signal_icon_, Gtk::PACK_SHRINK);
-        network_info_box_.pack_start(ssid_label_, Gtk::PACK_SHRINK);
-        network_info_box_.pack_start(security_icon_, Gtk::PACK_SHRINK);
-        network_info_box_.pack_start(status_icon_, Gtk::PACK_SHRINK);
-
-        // Create and add signal strength indicator with label
-        Gtk::Box *signal_box = Gtk::manage(new Gtk::Box(Gtk::ORIENTATION_HORIZONTAL, 4));
-        Gtk::Label *signal_prefix = Gtk::manage(new Gtk::Label("Signal Strength:"));
-        signal_box->pack_start(*signal_prefix, Gtk::PACK_SHRINK);
+        ssid_label_.set_halign(Gtk::ALIGN_START);
+        ssid_label_.set_hexpand(true);
 
         // Set the signal strength percentage text
         signal_label_.set_text(std::to_string(network_.signal_strength) + "%");
 
-        signal_box->pack_start(signal_label_, Gtk::PACK_SHRINK);
+        // Add network info widgets to the info box in a single line
+        network_info_box_.pack_start(signal_icon_, Gtk::PACK_SHRINK);
+        network_info_box_.pack_start(ssid_label_, Gtk::PACK_EXPAND_WIDGET);
+        // Put lock icon, check icon, and signal strength right after the network name
+        network_info_box_.pack_start(security_icon_, Gtk::PACK_SHRINK);
+        network_info_box_.pack_start(status_icon_, Gtk::PACK_SHRINK);
+        network_info_box_.pack_start(signal_label_, Gtk::PACK_SHRINK);
 
         // Set up the connect/disconnect button with appropriate icon and label
         if (network.connected)
@@ -107,8 +95,8 @@ namespace Wifi
         share_button_.set_always_show_image(true);
         share_button_.set_can_focus(false); // Prevent tab navigation to this button
 
-        // Add buttons to the controls box (connect on right, others on left)
-        controls_box_.pack_end(connect_button_, Gtk::PACK_SHRINK);
+        // Add buttons to the controls box
+        controls_box_.pack_start(connect_button_, Gtk::PACK_SHRINK);
 
         // Only show the forget and share buttons if the network is saved (i.e., password is available)
         if (!manager_->get_password(network.ssid).empty())
@@ -118,10 +106,9 @@ namespace Wifi
             share_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_share_clicked));
         }
 
-        // Add all components to the inner box in vertical order
-        inner_box->pack_start(network_info_box_, Gtk::PACK_SHRINK);
-        inner_box->pack_start(*signal_box, Gtk::PACK_SHRINK);
-        inner_box->pack_start(controls_box_, Gtk::PACK_SHRINK);
+        // Add both boxes to the main widget
+        pack_start(network_info_box_, Gtk::PACK_EXPAND_WIDGET);
+        pack_end(controls_box_, Gtk::PACK_SHRINK);
 
         // Connect button click handlers
         connect_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_connect_clicked));
@@ -131,11 +118,6 @@ namespace Wifi
         {
             forget_button_.signal_clicked().connect(sigc::mem_fun(*this, &WifiNetworkWidget::on_forget_clicked));
         }
-
-        // Add a subtle separator at the bottom for visual separation between networks
-        Gtk::Separator *separator = Gtk::manage(new Gtk::Separator(Gtk::ORIENTATION_HORIZONTAL));
-        separator->set_margin_top(8);
-        pack_start(*separator, Gtk::PACK_SHRINK);
 
         show_all_children();
     }
