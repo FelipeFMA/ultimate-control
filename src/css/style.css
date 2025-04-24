@@ -37,3 +37,16 @@
     border-top-left-radius: 0px;
     padding: 10px;
 }
+
+/* Tab content animation */
+.tab-content {
+    transition: opacity 200ms ease-in-out;
+}
+
+.tab-content.animate-in {
+    opacity: 0;
+}
+
+.tab-content.animate-out {
+    opacity: 0;
+}

@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <string>
 #include <mutex>
+#include <fstream>
 #include <glibmm/optioncontext.h>
 #include <glibmm/optiongroup.h>
 #include <glibmm/optionentry.h>
@@ -81,6 +82,9 @@ better_control.py     * @param floating_mode Whether to make the window float on
             std::system(cmd.c_str());
         }
 
+        // Load global CSS for the application
+        load_global_css();
+
         vbox_.set_orientation(Gtk::ORIENTATION_VERTICAL);
         add(vbox_);
 
@@ -133,6 +137,66 @@ better_control.py     * @param floating_mode Whether to make the window float on
     }
 
     /**
+     * @brief Load global CSS for the application
+     *
+     * Loads CSS from the style.css file and applies it to the application.
+     */
+    void load_global_css()
+    {
+        try
+        {
+            // Create a CSS provider
+            css_provider_ = Gtk::CssProvider::create();
+
+            // Try to load CSS from file - use absolute path for reliability
+            std::string css_path = "/home/felipe/Documents/Github/ultimate-control/src/css/style.css";
+            if (std::ifstream(css_path).good())
+            {
+                css_provider_->load_from_path(css_path);
+                std::cout << "Loaded CSS from " << css_path << std::endl;
+            }
+            else
+            {
+                // Try relative path as fallback
+                css_path = "src/css/style.css";
+                if (std::ifstream(css_path).good())
+                {
+                    css_provider_->load_from_path(css_path);
+                    std::cout << "Loaded CSS from " << css_path << std::endl;
+                }
+                else
+                {
+                    std::cerr << "CSS file not found at any path" << std::endl;
+
+                    // As a fallback, load CSS directly from string
+                    const std::string css_content =
+                        ".tab-content {"
+                        "    transition: opacity 200ms ease-in-out;"
+                        "}"
+                        ".tab-content.animate-in {"
+                        "    opacity: 0;"
+                        "}"
+                        ".tab-content.animate-out {"
+                        "    opacity: 0;"
+                        "}";
+
+                    css_provider_->load_from_data(css_content);
+                    std::cout << "Loaded CSS from inline string" << std::endl;
+                }
+            }
+
+            // Apply the CSS to the application
+            auto screen = Gdk::Screen::get_default();
+            Gtk::StyleContext::add_provider_for_screen(
+                screen, css_provider_, GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+        }
+        catch (const Glib::Error &ex)
+        {
+            std::cerr << "Error loading CSS: " << ex.what() << std::endl;
+        }
+    }
+
+    /**
      * @brief Switch to a specific tab by ID
      * @param tab_id The ID of the tab to switch to
      *
@@ -144,6 +208,41 @@ better_control.py     * @param floating_mode Whether to make the window float on
         auto it = tab_widgets_.find(tab_id);
         if (it != tab_widgets_.end())
         {
+            // Apply animation to the current tab if it's already loaded
+            int current_page = notebook_.get_current_page();
+            if (current_page >= 0 && current_page != it->second.page_num)
+            {
+                Gtk::Widget *current_widget = notebook_.get_nth_page(current_page);
+                if (current_widget)
+                {
+                    // Find the tab ID for the current page
+                    std::string current_tab_id;
+                    for (const auto &[id, info] : tab_widgets_)
+                    {
+                        if (info.page_num == current_page)
+                        {
+                            current_tab_id = id;
+                            break;
+                        }
+                    }
+
+                    // Only animate if the tab is fully loaded
+                    if (!current_tab_id.empty() && tab_widgets_[current_tab_id].loaded)
+                    {
+                        // Add exit animation class
+                        current_widget->get_style_context()->add_class("animate-out");
+
+                        // Remove the animation class after the transition completes
+                        Glib::signal_timeout().connect_once([current_widget]()
+                                                            {
+                            if (current_widget)
+                            {
+                                current_widget->get_style_context()->remove_class("animate-out");
+                            } }, 200); // Match the CSS transition duration
+                    }
+                }
+            }
+
             // First, switch to the requested tab to ensure it's visible immediately
             notebook_.set_current_page(it->second.page_num);
 
@@ -153,6 +252,30 @@ better_control.py     * @param floating_mode Whether to make the window float on
                 // Show loading indicator and start async loading
                 show_loading_indicator(tab_id, it->second.page_num);
                 load_tab_content_async(tab_id, it->second.page_num);
+            }
+            else if (it->second.loaded)
+            {
+                // If the tab is already loaded, apply entrance animation
+                Gtk::Widget *widget = it->second.widget;
+                if (widget)
+                {
+                    // Force the widget to have opacity 0 initially
+                    widget->set_opacity(0);
+
+                    // Add entrance animation class
+                    widget->get_style_context()->add_class("animate-in");
+
+                    // Remove the animation class after a short delay
+                    Glib::signal_timeout().connect_once([widget]()
+                                                        {
+                        if (widget)
+                        {
+                            std::cout << "Starting direct tab switch animation" << std::endl;
+                            widget->get_style_context()->remove_class("animate-in");
+                            // Ensure opacity is set to 1
+                            widget->set_opacity(1);
+                        } }, 50);
+                }
             }
         }
     }
@@ -422,6 +545,41 @@ private:
             return;
         }
 
+        // Apply animation to the current tab if it's already loaded
+        int current_page = notebook_.get_current_page();
+        if (current_page >= 0 && current_page != static_cast<int>(page_num))
+        {
+            Gtk::Widget *current_widget = notebook_.get_nth_page(current_page);
+            if (current_widget)
+            {
+                // Find the tab ID for the current page
+                std::string current_tab_id;
+                for (const auto &[id, info] : tab_widgets_)
+                {
+                    if (info.page_num == current_page)
+                    {
+                        current_tab_id = id;
+                        break;
+                    }
+                }
+
+                // Only animate if the tab is fully loaded
+                if (!current_tab_id.empty() && tab_widgets_[current_tab_id].loaded)
+                {
+                    // Add exit animation class
+                    current_widget->get_style_context()->add_class("animate-out");
+
+                    // Remove the animation class after the transition completes
+                    Glib::signal_timeout().connect_once([current_widget]()
+                                                        {
+                        if (current_widget)
+                        {
+                            current_widget->get_style_context()->remove_class("animate-out");
+                        } }, 250); // Match the CSS transition duration
+                }
+            }
+        }
+
         // If we're preventing auto-loading (e.g., when starting with a specific tab),
         // don't load other tabs automatically
         if (prevent_auto_loading_)
@@ -486,6 +644,45 @@ private:
                                                 {
                 // Use a new lambda to avoid capturing the static variable
                 loading = false; }, 100);
+        }
+        else
+        {
+            // If the tab is already loaded, apply entrance animation
+            Gtk::Widget *new_widget = notebook_.get_nth_page(page_num);
+            if (new_widget)
+            {
+                // Find the tab ID for the new page
+                std::string new_tab_id;
+                for (const auto &[id, info] : tab_widgets_)
+                {
+                    if (info.page_num == static_cast<int>(page_num))
+                    {
+                        new_tab_id = id;
+                        break;
+                    }
+                }
+
+                // Only animate if the tab is fully loaded
+                if (!new_tab_id.empty() && tab_widgets_[new_tab_id].loaded)
+                {
+                    // Force the widget to have opacity 0 initially
+                    new_widget->set_opacity(0);
+
+                    // Add entrance animation class
+                    new_widget->get_style_context()->add_class("animate-in");
+
+                    // Remove the animation class after a short delay
+                    Glib::signal_timeout().connect_once([new_widget]()
+                                                        {
+                        if (new_widget)
+                        {
+                            std::cout << "Starting tab switch animation" << std::endl;
+                            new_widget->get_style_context()->remove_class("animate-in");
+                            // Ensure opacity is set to 1
+                            new_widget->set_opacity(1);
+                        } }, 50);
+                }
+            }
         }
     }
 
@@ -737,6 +934,14 @@ private:
             // Replace the loading indicator with the actual tab content
             notebook_.remove_page(current_page_num);
 
+            // Set up animation for the tab content
+            content->set_name("tab-" + id);
+            content->get_style_context()->add_class("tab-content");
+
+            // Force the widget to have opacity 0 initially
+            content->set_opacity(0);
+            content->get_style_context()->add_class("animate-in");
+
             // Insert the new content
             int new_page_num = notebook_.insert_page(*content, *event_box, current_page_num);
 
@@ -757,6 +962,15 @@ private:
             {
                 notebook_.set_current_page(new_page_num);
             }
+
+            // Start animation after a short delay to ensure the tab is visible
+            Glib::signal_timeout().connect_once([content]()
+                                                {
+                std::cout << "Starting tab animation" << std::endl;
+                // Remove the animate-in class to trigger the transition
+                content->get_style_context()->remove_class("animate-in");
+                // Ensure opacity is set to 1
+                content->set_opacity(1); }, 50);
 
             // Notify that the tab has been loaded
             tab_loaded_dispatchers_[id].emit();
@@ -817,6 +1031,9 @@ private:
 
     // Settings window
     std::unique_ptr<Settings::SettingsWindow> settings_window_;
+
+    // CSS provider for global styles
+    Glib::RefPtr<Gtk::CssProvider> css_provider_;
 };
 
 /**
